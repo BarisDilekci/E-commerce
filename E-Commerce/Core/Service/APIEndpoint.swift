@@ -6,26 +6,19 @@
 //
 
 import Foundation
-
 enum APIEndpoint {
-    static let baseURL = "https://fakestoreapi.com/"
-    
+    static let baseURL = "http://localhost:8080/api/v1"
 
     case products
-    case category
-    
-    
-    var path : String {
+
+    var path: String {
         switch self {
         case .products:
-            return "/\(APIEndpoint.baseURL)/houses"
-        case .category:
-            return "/\(APIEndpoint.baseURL)/categories"
-
+            return "/products"
         }
     }
-    
-    var url : URL? {
+
+    var url: URL? {
         return URL(string: APIEndpoint.baseURL + path)
     }
 }

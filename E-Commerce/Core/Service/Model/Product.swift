@@ -7,28 +7,17 @@
 
 import Foundation
 
-// MARK: - ProductElement
-struct ProductElement: Codable {
-    let id: Int
-    let title: String
+
+struct Product: Decodable {
+    let id: Int?          // ? ile opsiyonel yaptık
+    let name: String
     let price: Double
-    let description: String
-    let category: Category
-    let image: String
-    let rating: Rating
-}
+    let discount: Double
+    let store: String
+    let imageUrls: [String]
 
-enum Category: String, Codable {
-    case electronics = "electronics"
-    case jewelery = "jewelery"
-    case menSClothing = "men's clothing"
-    case womenSClothing = "women's clothing"
+    enum CodingKeys: String, CodingKey {
+        case id, name, price, discount, store
+        case imageUrls = "image_urls"
+    }
 }
-
-// MARK: - Rating
-struct Rating: Codable {
-    let rate: Double
-    let count: Int
-}
-
-typealias Product = [ProductElement]
