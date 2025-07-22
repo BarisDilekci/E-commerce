@@ -7,17 +7,19 @@
 
 import Foundation
 
-
 struct Product: Decodable {
-    let id: Int?          // ? ile opsiyonel yaptık
+    let id: Int?
     let name: String
     let price: Double
+    let description: String
     let discount: Double
     let store: String
     let imageUrls: [String]
+    let category_id: Int
 
     enum CodingKeys: String, CodingKey {
-        case id, name, price, discount, store
+        case id, name, price, description, discount, store
+        case category_id = "category_id"
         case imageUrls = "image_urls"
     }
 }

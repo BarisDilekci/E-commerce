@@ -20,7 +20,8 @@ protocol HomeViewModelProtocol {
 
 final class HomeViewModel: HomeViewModelProtocol {
 
-    
+    var onProductSelected: ((Product) -> Void)?
+
     private let networkService: NetworkServiceProtocol
     
     var onProductsFetched: (([Product]) -> Void)?
@@ -107,14 +108,15 @@ final class HomeViewModel: HomeViewModelProtocol {
     
     
     func didSelectRow(at indexPath: IndexPath) {
-        let product = product[indexPath.item]
+        let selectedProduct = product[indexPath.item]
         
         let impactGenerator = UIImpactFeedbackGenerator(style: .light)
         impactGenerator.impactOccurred()
-
         
-        print("Selected product: \(product.name)")
+        onProductSelected?(selectedProduct)
+   
     }
+
     
      let refreshControl: UIRefreshControl = {
         let refresh = UIRefreshControl()

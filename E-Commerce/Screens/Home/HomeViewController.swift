@@ -10,13 +10,13 @@ import UIKit
 enum HomeViewBuilder {
     static func generate() -> UIViewController {
           let viewModel = HomeViewModel(networkService: NetworkService.shared)
-          let viewController = ViewController(viewModel: viewModel)
+          let viewController = HomeViewController(viewModel: viewModel)
           return viewController
       }
 }
 
 
-class ViewController: UIViewController {
+class HomeViewController: UIViewController {
     
     private let viewModel: HomeViewModel
     
@@ -55,6 +55,8 @@ class ViewController: UIViewController {
         
         showLoading(true)
         viewModel.viewDidLoad()
+
+
     }
     
     private func setupUI() {
@@ -161,7 +163,7 @@ class ViewController: UIViewController {
 }
 
 // MARK: - UICollectionViewDataSource & UICollectionViewDelegateFlowLayout
-extension ViewController: UICollectionViewDataSource, UICollectionViewDelegateFlowLayout {
+extension HomeViewController: UICollectionViewDataSource, UICollectionViewDelegateFlowLayout {
     
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
         return viewModel.numberOfItemsInSection()
@@ -183,6 +185,8 @@ extension ViewController: UICollectionViewDataSource, UICollectionViewDelegateFl
     }
     
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
-        viewModel.didSelectRow(at: indexPath)
+        let selectedProduct = products[indexPath.item]
+        let detailViewController = ProductDetailViewController(product: selectedProduct)
+        self.navigationController?.pushViewController(detailViewController, animated: true)
     }
 }

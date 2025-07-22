@@ -2,12 +2,13 @@
 //  ProductCell.swift
 //  E-Commerce
 //
-//  Created by Barış Dilekçi on 19.07.2025.
+//  Created by Barış Dilekçi on 19.07.2025.z"
 //
 import Foundation
 import UIKit
-import UIKit
 
+
+// MARK: - ProductCell
 class ProductCell: UICollectionViewCell {
     
     static let identifier = "ProductCell"
