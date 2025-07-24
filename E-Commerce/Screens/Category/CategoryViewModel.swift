@@ -14,13 +14,14 @@ protocol CategoryViewModelProtocol {
     func cellForItemAt(at indexPath : IndexPath, tableView : UITableView) -> UITableViewCell
     var onError : ((Error) -> Void)? { get set }
     func numberOfItemsInSection() -> Int
-    func didSelectRow(at indexPath: IndexPath)
 }
 
 final class CategoryViewModel : CategoryViewModelProtocol {
     
-    var onError: ((any Error) -> Void)?
+    var onError: ((Error) -> Void)?
     var onCategoryFetched: (([Category]) -> Void)?
+    
+    
     var category : [Category] = []
     
     private let networkService : NetworkServiceProtocol
@@ -28,9 +29,9 @@ final class CategoryViewModel : CategoryViewModelProtocol {
     init(networkService : NetworkServiceProtocol) {
         self.networkService = networkService
     }
-    
-    
-    
+    func categoryAt(index: Int) -> Category {
+        return category[index] 
+    }
     private func fetchCategory() {
         Task {
             do {
@@ -44,15 +45,13 @@ final class CategoryViewModel : CategoryViewModelProtocol {
                 await MainActor.run {
                     self.onError?(error)
                 }
-                print("Kategori alınırken hata oluştu: \(error)")
+                print("Error fetching categories: \(error)")
             }
         }
     }
     
     private func fetch() async throws -> [Category] {
         let category: [Category] = try await networkService.fetch(endpoint: APIEndpoint.category)
-        
- 
         return category
     }
     
@@ -72,9 +71,5 @@ final class CategoryViewModel : CategoryViewModelProtocol {
         return category.count
     }
     
-    func didSelectRow(at indexPath: IndexPath) {
-        print(indexPath)
-    }
-    
-    
+
 }

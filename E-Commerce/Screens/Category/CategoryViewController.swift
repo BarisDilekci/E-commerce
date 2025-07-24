@@ -6,13 +6,13 @@
 //
 
 import UIKit
-
 enum CategoryViewBuilder {
     static func generate() -> UIViewController {
-          let viewModel = CategoryViewModel(networkService: NetworkService.shared)
-          let viewController = CategoryViewController(viewModel: viewModel)
-          return viewController
-      }
+        let viewModel = CategoryViewModel(networkService: NetworkService.shared)
+        let viewController = CategoryViewController(viewModel: viewModel)
+        let navigationController = UINavigationController(rootViewController: viewController)
+        return navigationController
+    }
 }
 
 final class CategoryViewController: UIViewController {
@@ -47,11 +47,14 @@ final class CategoryViewController: UIViewController {
         
         setupLayout()
         viewModel.viewDidLoad()
+   
+
         viewModel.onCategoryFetched = { [weak self] categories in
-               DispatchQueue.main.async {
-                   self?.tableView.reloadData()
-               }
-           }
+            DispatchQueue.main.async {
+                self?.category = categories // Bu satırı ekleyin
+                self?.tableView.reloadData()
+            }
+        }
            
            viewModel.onError = { error in
                print("Kategori çekilirken hata: \(error.localizedDescription)")
@@ -79,7 +82,25 @@ extension CategoryViewController: UITableViewDelegate, UITableViewDataSource {
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         return viewModel.cellForItemAt(at: indexPath, tableView: tableView.self)
-
-       
     }
+    
+    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        guard indexPath.row < category.count else {
+            print("Geçersiz index: \(indexPath.row)")
+            return
+        }
+
+        let selectedCategory = category[indexPath.row]
+        let categoryId = selectedCategory.id
+        let categoryName = selectedCategory.name
+
+        print("Tıklanan index: \(indexPath.row)")
+        print("NavigationController var mı: \(navigationController != nil)")
+        print("Gönderilen categoryId: \(categoryId), categoryName: \(categoryName)")
+
+        let productVC = ProductViewBuilder.generate(categoryId: categoryId, categoryName: categoryName)
+        navigationController?.pushViewController(productVC, animated: true)
+    }
+
+
 }
