@@ -12,6 +12,7 @@ enum APIEndpoint {
 
     case products
     case productsByCategory(id: Int)
+    case category
 
     var path: String {
         switch self {
@@ -19,6 +20,9 @@ enum APIEndpoint {
             return "/products"
         case .productsByCategory(let id):
             return "/categories/\(id)/products"
+        case .category:
+            return "/categories"
+            
         }
     }
 

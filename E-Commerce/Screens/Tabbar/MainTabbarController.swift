@@ -8,18 +8,31 @@
 import Foundation
 import UIKit
 
-protocol MainTabbarProtocol : AnyObject {
-    var tabBarController: UITabBarController? { get }
+protocol MainTabbarProtocol: AnyObject {
+    var tabBarController: UITabBarController { get }
     static func createTabBar() -> MainTabbarProtocol
 }
 
-
-final class MainTabbarController: MainTabbarProtocol {
-    var tabBarController: UITabBarController?
+class MainTabbarController: MainTabbarProtocol {
     
-    static func createTabBar() -> any MainTabbarProtocol {
+    let tabBarController: UITabBarController
+    
+    private init() {
+        self.tabBarController = UITabBarController()
+        setupTabBar()
+    }
+    
+    static func createTabBar() -> MainTabbarProtocol {
         return MainTabbarController()
     }
     
-    
+    private func setupTabBar() {
+        let homeVC = HomeViewBuilder.generate()
+        homeVC.tabBarItem = UITabBarItem(title: "Ana Sayfa", image: UIImage(systemName: "house"), tag: 0)
+        
+        let categoryVC = CategoryViewBuilder.generate()
+        categoryVC.tabBarItem = UITabBarItem(title: "Kategoriler", image: UIImage(systemName: "square.grid.2x2"), tag: 1)
+        
+        tabBarController.viewControllers = [homeVC, categoryVC]
+    }
 }
