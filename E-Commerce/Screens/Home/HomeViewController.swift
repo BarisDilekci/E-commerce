@@ -4,8 +4,8 @@
 //
 //  Created by Barış Dilekçi on 14.06.2025.
 //
-
 import UIKit
+
 
 enum HomeViewBuilder {
     static func generate() -> UIViewController {
@@ -15,7 +15,6 @@ enum HomeViewBuilder {
           return navigationController
       }
 }
-
 
 class HomeViewController: UIViewController {
     
@@ -31,12 +30,26 @@ class HomeViewController: UIViewController {
     }
     
     private var products: [Product] = []
+    private var filteredProducts: [Product] = []
+    private var sliderImages: [String] = []
+    private var isSearching = false
+    private let emptyStateView = EmptyStateView(message: "Gösterilecek ürün bulunamadı.")
+
+    
+    private let searchBar: UISearchBar = {
+        let sb = UISearchBar()
+        sb.translatesAutoresizingMaskIntoConstraints = false
+        sb.placeholder = "Ürün ara..."
+        sb.searchBarStyle = .minimal
+        sb.backgroundColor = .systemGroupedBackground
+        return sb
+    }()
     
     private let collectionView: UICollectionView = {
         let layout = UICollectionViewFlowLayout()
         layout.minimumLineSpacing = 16
         layout.minimumInteritemSpacing = 12
-        layout.sectionInset = UIEdgeInsets(top: 16, left: 16, bottom: 16, right: 16)
+        layout.sectionInset = UIEdgeInsets(top: 0, left: 16, bottom: 16, right: 16)
         
         let cv = UICollectionView(frame: .zero, collectionViewLayout: layout)
         cv.translatesAutoresizingMaskIntoConstraints = false
@@ -46,18 +59,23 @@ class HomeViewController: UIViewController {
         return cv
     }()
     
-
-    
     override func viewDidLoad() {
         super.viewDidLoad()
+        setupSliderData()
         setupUI()
         setupCollectionView()
         bindViewModel()
         
         showLoading(true)
         viewModel.viewDidLoad()
-
-
+    }
+    
+    private func setupSliderData() {
+        sliderImages = [
+            "samsung",
+            "apple",
+            "Huawei"
+        ]
     }
     
     private func setupUI() {
@@ -68,19 +86,29 @@ class HomeViewController: UIViewController {
         navigationController?.navigationBar.prefersLargeTitles = true
         navigationController?.navigationBar.tintColor = .systemBlue
         
+        view.addSubview(searchBar)
         view.addSubview(collectionView)
         view.addSubview(viewModel.loadingView)
         view.addSubview(emptyStateView)
         
         NSLayoutConstraint.activate([
-            collectionView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
+            // Search Bar
+            searchBar.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
+            searchBar.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 8),
+            searchBar.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -8),
+            searchBar.heightAnchor.constraint(equalToConstant: 50),
+            
+            // Ana Collection View
+            collectionView.topAnchor.constraint(equalTo: searchBar.bottomAnchor, constant: 8),
             collectionView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             collectionView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             collectionView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
             
+            // Loading View
             viewModel.loadingView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             viewModel.loadingView.centerYAnchor.constraint(equalTo: view.centerYAnchor),
             
+            // Empty State View
             emptyStateView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             emptyStateView.centerYAnchor.constraint(equalTo: view.centerYAnchor),
             emptyStateView.widthAnchor.constraint(equalToConstant: 200),
@@ -91,9 +119,13 @@ class HomeViewController: UIViewController {
     private func setupCollectionView() {
         collectionView.delegate = self
         collectionView.dataSource = self
+        
+        searchBar.delegate = self
+        
         collectionView.register(ProductCell.self, forCellWithReuseIdentifier: ProductCell.identifier)
         
-        // Pull to refresh
+        collectionView.register(SliderHeaderView.self, forSupplementaryViewOfKind: UICollectionView.elementKindSectionHeader, withReuseIdentifier: SliderHeaderView.identifier)
+        
         collectionView.refreshControl = viewModel.refreshControl
         viewModel.refreshControl.addTarget(self, action: #selector(refreshData), for: .valueChanged)
     }
@@ -119,11 +151,16 @@ class HomeViewController: UIViewController {
     private func updateProducts(_ products: [Product]) {
         self.products = products
         
-        // Empty state kontrolü
-        emptyStateView.isHidden = !products.isEmpty
-        collectionView.isHidden = products.isEmpty
+        if isSearching {
+            self.filteredProducts = products
+        }
         
-        if !products.isEmpty {
+        let displayProducts = isSearching ? filteredProducts : products
+        
+        emptyStateView.isHidden = !displayProducts.isEmpty
+        collectionView.isHidden = displayProducts.isEmpty
+        
+        if !displayProducts.isEmpty {
             collectionView.reloadData()
             
             if collectionView.contentOffset.y == 0 {
@@ -159,19 +196,76 @@ class HomeViewController: UIViewController {
     }
     
     @objc private func refreshData() {
+        searchBar.text = ""
+        isSearching = false
+        searchBar.resignFirstResponder()
         viewModel.viewDidLoad()
+    }
+    
+    private func performSearch(with query: String) {
+        if query.isEmpty {
+            isSearching = false
+            collectionView.reloadData()
+            return
+        }
+        
+        isSearching = true
+        
+        viewModel.searchProducts(query: query) { [weak self] searchResults in
+            DispatchQueue.main.async {
+                self?.filteredProducts = searchResults
+                self?.collectionView.reloadData()
+                
+                // Empty state kontrolü
+                self?.emptyStateView.isHidden = !searchResults.isEmpty
+                self?.collectionView.isHidden = searchResults.isEmpty
+            }
+        }
     }
 }
 
 // MARK: - UICollectionViewDataSource & UICollectionViewDelegateFlowLayout
 extension HomeViewController: UICollectionViewDataSource, UICollectionViewDelegateFlowLayout {
     
+    func numberOfSections(in collectionView: UICollectionView) -> Int {
+        return 1
+    }
+    
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        return viewModel.numberOfItemsInSection()
+        if isSearching {
+            return filteredProducts.count
+        } else {
+            return viewModel.numberOfItemsInSection()
+        }
     }
 
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
-        viewModel.cellForItemAt(at: indexPath, collectionView: collectionView)
+        if isSearching {
+            let cell = collectionView.dequeueReusableCell(withReuseIdentifier: ProductCell.identifier, for: indexPath) as! ProductCell
+            let product = filteredProducts[indexPath.item]
+            cell.configure(with: product)
+            return cell
+        } else {
+            return viewModel.cellForItemAt(at: indexPath, collectionView: collectionView)
+        }
+    }
+    
+    // Header View (Slider)
+    func collectionView(_ collectionView: UICollectionView, viewForSupplementaryElementOfKind kind: String, at indexPath: IndexPath) -> UICollectionReusableView {
+        if kind == UICollectionView.elementKindSectionHeader {
+            let headerView = collectionView.dequeueReusableSupplementaryView(ofKind: kind, withReuseIdentifier: SliderHeaderView.identifier, for: indexPath) as! SliderHeaderView
+            headerView.configure(with: sliderImages)
+            return headerView
+        }
+        return UICollectionReusableView()
+    }
+    
+    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, referenceSizeForHeaderInSection section: Int) -> CGSize {
+        if isSearching {
+            return CGSize(width: collectionView.frame.width, height: 0)
+        } else {
+            return CGSize(width: collectionView.frame.width, height: 240) 
+        }
     }
 
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
@@ -179,15 +273,164 @@ extension HomeViewController: UICollectionViewDataSource, UICollectionViewDelega
         let spacing: CGFloat = 12
         let availableWidth = collectionView.frame.width - (padding * 2) - spacing
         let itemWidth = availableWidth / 2
-        
         let itemHeight = itemWidth * 1.6
-        
         return CGSize(width: itemWidth, height: itemHeight)
     }
     
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
-        let selectedProduct = products[indexPath.item]
+        let selectedProduct: Product
+        
+        if isSearching {
+            selectedProduct = filteredProducts[indexPath.item]
+        } else {
+            selectedProduct = products[indexPath.item]
+        }
+        
         let detailViewController = ProductDetailViewController(product: selectedProduct)
         self.navigationController?.pushViewController(detailViewController, animated: true)
     }
 }
+
+// MARK: - UISearchBarDelegate
+extension HomeViewController: UISearchBarDelegate {
+    
+    func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
+        // Anlık arama (debounce ile optimize edilebilir)
+        NSObject.cancelPreviousPerformRequests(withTarget: self)
+        perform(#selector(delayedSearch), with: searchText, afterDelay: 0.5)
+    }
+    
+    @objc private func delayedSearch() {
+        guard let searchText = searchBar.text else { return }
+        performSearch(with: searchText)
+    }
+    
+    func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
+        guard let searchText = searchBar.text else { return }
+        performSearch(with: searchText)
+        searchBar.resignFirstResponder()
+    }
+    
+    func searchBarCancelButtonClicked(_ searchBar: UISearchBar) {
+        searchBar.text = ""
+        isSearching = false
+        searchBar.resignFirstResponder()
+        updateProducts(products)
+    }
+
+    
+    func searchBarTextDidBeginEditing(_ searchBar: UISearchBar) {
+        searchBar.setShowsCancelButton(true, animated: true)
+    }
+    
+    func searchBarTextDidEndEditing(_ searchBar: UISearchBar) {
+        searchBar.setShowsCancelButton(false, animated: true)
+    }
+}
+
+// MARK: - Slider Header View
+class SliderHeaderView: UICollectionReusableView {
+    static let identifier = "SliderHeaderView"
+    
+    private var sliderImages: [String] = []
+    
+    // Slider Collection View
+    private let sliderCollectionView: UICollectionView = {
+        let layout = UICollectionViewFlowLayout()
+        layout.scrollDirection = .horizontal
+        layout.minimumLineSpacing = 0
+        layout.minimumInteritemSpacing = 0
+        
+        let cv = UICollectionView(frame: .zero, collectionViewLayout: layout)
+        cv.translatesAutoresizingMaskIntoConstraints = false
+        cv.backgroundColor = .clear
+        cv.showsHorizontalScrollIndicator = false
+        cv.isPagingEnabled = true
+        return cv
+    }()
+    
+    // Page Control
+    private let pageControl: UIPageControl = {
+        let pc = UIPageControl()
+        pc.translatesAutoresizingMaskIntoConstraints = false
+        pc.currentPageIndicatorTintColor = .systemBlue
+        pc.pageIndicatorTintColor = .lightGray
+        pc.hidesForSinglePage = true
+        return pc
+    }()
+    
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        setupUI()
+    }
+    
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+    
+    private func setupUI() {
+        backgroundColor = UIColor.systemGroupedBackground
+        
+        addSubview(sliderCollectionView)
+        addSubview(pageControl)
+        
+        NSLayoutConstraint.activate([
+            // Slider Collection View
+            sliderCollectionView.topAnchor.constraint(equalTo: topAnchor),
+            sliderCollectionView.leadingAnchor.constraint(equalTo: leadingAnchor),
+            sliderCollectionView.trailingAnchor.constraint(equalTo: trailingAnchor),
+            sliderCollectionView.heightAnchor.constraint(equalToConstant: 200),
+            
+            // Page Control
+            pageControl.topAnchor.constraint(equalTo: sliderCollectionView.bottomAnchor, constant: 8),
+            pageControl.centerXAnchor.constraint(equalTo: centerXAnchor),
+            pageControl.heightAnchor.constraint(equalToConstant: 30),
+            pageControl.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -2)
+        ])
+        
+        setupSliderCollectionView()
+    }
+    
+    private func setupSliderCollectionView() {
+        sliderCollectionView.delegate = self
+        sliderCollectionView.dataSource = self
+        sliderCollectionView.register(SliderCell.self, forCellWithReuseIdentifier: SliderCell.identifier)
+    }
+    
+    func configure(with images: [String]) {
+        self.sliderImages = images
+        pageControl.numberOfPages = images.count
+        sliderCollectionView.reloadData()
+    }
+}
+
+// MARK: - SliderHeaderView Collection View Methods
+extension SliderHeaderView: UICollectionViewDataSource, UICollectionViewDelegateFlowLayout {
+    
+    func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
+        return sliderImages.count
+    }
+    
+    func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
+        let cell = collectionView.dequeueReusableCell(withReuseIdentifier: SliderCell.identifier, for: indexPath) as! SliderCell
+        cell.configure(with: sliderImages[indexPath.item])
+        return cell
+    }
+    
+    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
+        return CGSize(width: collectionView.frame.width, height: 200)
+    }
+    
+    func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
+        print("Slider item \(indexPath.item) tapped")
+    }
+    
+    func scrollViewDidScroll(_ scrollView: UIScrollView) {
+        let pageIndex = round(scrollView.contentOffset.x / frame.width)
+        pageControl.currentPage = Int(pageIndex)
+    }
+    
+ 
+
+}
+

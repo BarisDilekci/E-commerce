@@ -47,6 +47,11 @@ final class HomeViewModel: HomeViewModelProtocol {
         fetchProducts()
     }
     
+    func searchProducts(query: String, completion: @escaping ([Product]) -> Void) {
+         let filtered = product.filter { $0.name.lowercased().contains(query.lowercased()) }
+         completion(filtered)
+     }
+    
     private func fetchProducts() {
         Task {
             do {

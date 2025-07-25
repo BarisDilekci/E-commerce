@@ -7,35 +7,41 @@
 
 import UIKit
 
-   let emptyStateView: UIView = {
-      let view = UIView()
-      view.translatesAutoresizingMaskIntoConstraints = false
-      view.isHidden = true
-      
-      let imageView = UIImageView(image: UIImage(systemName: "bag"))
-      imageView.tintColor = .systemGray3
-      imageView.contentMode = .scaleAspectFit
-      imageView.translatesAutoresizingMaskIntoConstraints = false
-      
-      let label = UILabel()
-      label.text = "Ürün bulunamadı"
-      label.font = UIFont.systemFont(ofSize: 18, weight: .medium)
-      label.textColor = .systemGray2
-      label.textAlignment = .center
-      label.translatesAutoresizingMaskIntoConstraints = false
-      
-      view.addSubview(imageView)
-      view.addSubview(label)
-      
-      NSLayoutConstraint.activate([
-          imageView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-          imageView.centerYAnchor.constraint(equalTo: view.centerYAnchor, constant: -20),
-          imageView.widthAnchor.constraint(equalToConstant: 60),
-          imageView.heightAnchor.constraint(equalToConstant: 60),
-          
-          label.topAnchor.constraint(equalTo: imageView.bottomAnchor, constant: 16),
-          label.centerXAnchor.constraint(equalTo: view.centerXAnchor)
-      ])
-      
-      return view
-  }()
+final class EmptyStateView: UIView {
+    
+    private let messageLabel: UILabel = {
+        let label = UILabel()
+        label.translatesAutoresizingMaskIntoConstraints = false
+        label.text = "Gösterilecek ürün bulunamadı."
+        label.textAlignment = .center
+        label.textColor = .secondaryLabel
+        label.numberOfLines = 0
+        return label
+    }()
+    
+    init(message: String = "Gösterilecek ürün bulunamadı.") {
+        super.init(frame: .zero)
+        translatesAutoresizingMaskIntoConstraints = false
+        setupUI(message: message)
+    }
+    
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+    
+    private func setupUI(message: String) {
+        addSubview(messageLabel)
+        messageLabel.text = message
+        
+        NSLayoutConstraint.activate([
+            messageLabel.centerXAnchor.constraint(equalTo: centerXAnchor),
+            messageLabel.centerYAnchor.constraint(equalTo: centerYAnchor),
+            messageLabel.leadingAnchor.constraint(greaterThanOrEqualTo: leadingAnchor, constant: 8),
+            messageLabel.trailingAnchor.constraint(lessThanOrEqualTo: trailingAnchor, constant: -8)
+        ])
+    }
+    
+    func updateMessage(_ text: String) {
+        messageLabel.text = text
+    }
+}
