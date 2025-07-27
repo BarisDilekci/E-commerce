@@ -26,10 +26,36 @@ struct LoginRequest: Codable {
     }
 }
 
+struct RegisterRequest: Codable {
+    let username: String
+    let email: String
+    let password: String
+    let firstName: String
+    let lastName: String
+    
+    enum CodingKeys: String, CodingKey {
+        case username, email, password
+        case firstName = "first_name"
+        case lastName = "last_name"
+    }
+    
+    init(username: String, email: String, password: String, firstName: String, lastName: String) {
+        self.username = username
+        self.email = email
+        self.password = password
+        self.firstName = firstName
+        self.lastName = lastName
+    }
+}
+
 struct LoginResponse: Codable {
     let message: String
     let token: String
     let user: User
+}
+
+struct RegisterResponse: Codable {
+    let message: String
 }
 
 
@@ -51,6 +77,7 @@ protocol AuthServiceProtocol {
     var isLoggedIn: Bool { get }
     
     func login(username: String, password: String, completion: @escaping (Result<LoginResponse, Error>) -> Void)
+    func register(username: String, email: String, password: String, firstName: String, lastName: String, completion: @escaping (Result<RegisterResponse, Error>) -> Void)
     func logout()
     func getToken() -> String?
     func getCurrentUser() -> User?
@@ -196,6 +223,102 @@ final class AuthService: AuthServiceProtocol {
         }.resume()
     }
     
+    func register(username: String, email: String, password: String, firstName: String, lastName: String, completion: @escaping (Result<RegisterResponse, Error>) -> Void) {
+        guard let url = APIEndpoint.register.url else {
+            completion(.failure(NSError(domain: "Invalid URL", code: 0, userInfo: nil)))
+            return
+        }
+        
+        let registerRequest = RegisterRequest(
+            username: username,
+            email: email,
+            password: password,
+            firstName: firstName,
+            lastName: lastName
+        )
+        
+        print("📝 Register attempt:")
+        print("   📍 URL: \(url)")
+        print("   👤 Username: \(username)")
+        print("   📧 Email: \(email)")
+        print("   👤 Name: \(firstName) \(lastName)")
+        print("   🔑 Password length: \(password.count)")
+        
+        var request = URLRequest(url: url)
+        request.httpMethod = APIEndpoint.register.httpMethod
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.timeoutInterval = 30
+        
+        do {
+            let requestData = try JSONEncoder().encode(registerRequest)
+            request.httpBody = requestData
+            
+            if let requestString = String(data: requestData, encoding: .utf8) {
+                print("   📤 Request JSON: \(requestString)")
+            }
+        } catch {
+            print("❌ JSON encoding error: \(error)")
+            completion(.failure(error))
+            return
+        }
+        
+        urlSession.dataTask(with: request) { data, response, error in
+            DispatchQueue.main.async {
+                if let error = error {
+                    print("❌ Network error: \(error)")
+                    completion(.failure(error))
+                    return
+                }
+                
+                if let httpResponse = response as? HTTPURLResponse {
+                    print("   📥 HTTP Status: \(httpResponse.statusCode)")
+                    
+                    if let data = data, let responseString = String(data: data, encoding: .utf8) {
+                        print("   📄 Response: \(responseString)")
+                    }
+                    
+                    if httpResponse.statusCode == 422 {
+                        // Backend'den gelen error mesajını parse et
+                        if let data = data,
+                           let errorResponse = try? JSONSerialization.jsonObject(with: data, options: []) as? [String: Any],
+                           let errorMessage = errorResponse["error"] as? String {
+                            completion(.failure(AuthError.registrationError(errorMessage)))
+                        } else {
+                            completion(.failure(AuthError.registrationError("Kayıt sırasında hata oluştu")))
+                        }
+                        return
+                    } else if httpResponse.statusCode == 400 {
+                        completion(.failure(AuthError.invalidRequest))
+                        return
+                    } else if httpResponse.statusCode != 201 {
+                        completion(.failure(AuthError.serverError(httpResponse.statusCode)))
+                        return
+                    }
+                }
+                
+                guard let data = data else {
+                    completion(.failure(NSError(domain: "No data", code: 0, userInfo: nil)))
+                    return
+                }
+                
+                do {
+                    let registerResponse = try JSONDecoder().decode(RegisterResponse.self, from: data)
+                    
+                    print("✅ Registration successful!")
+                    print("   🎉 Message: \(registerResponse.message)")
+                    
+                    completion(.success(registerResponse))
+                } catch {
+                    print("❌ JSON parsing error: \(error)")
+                    if let decodingError = error as? DecodingError {
+                        print("   Decoding details: \(decodingError)")
+                    }
+                    completion(.failure(error))
+                }
+            }
+        }.resume()
+    }
+    
     func logout() {
         _ = keychainHelper.delete(tokenKey)
         userDefaults.removeObject(forKey: tokenExpiryKey)
@@ -316,6 +439,8 @@ extension AuthService {
         case networkError
         case tokenExpired
         case serverError(Int)
+        case invalidRequest
+        case registrationError(String)
         
         var errorDescription: String? {
             switch self {
@@ -327,6 +452,10 @@ extension AuthService {
                 return "Oturum süresi doldu"
             case .serverError(let code):
                 return "Sunucu hatası: \(code)"
+            case .invalidRequest:
+                return "Geçersiz istek"
+            case .registrationError(let message):
+                return message
             }
         }
     }
@@ -363,6 +492,7 @@ final class MockAuthService: AuthServiceProtocol {
     var mockToken: String?
     var mockUser: User?
     var loginCalled = false
+    var registerCalled = false
     var shouldReturnError = false
     var mockRemainingTime: TimeInterval?
     
@@ -401,6 +531,17 @@ final class MockAuthService: AuthServiceProtocol {
             self.mockToken = response.token
             self.mockUser = user
             
+            completion(.success(response))
+        }
+    }
+    
+    func register(username: String, email: String, password: String, firstName: String, lastName: String, completion: @escaping (Result<RegisterResponse, Error>) -> Void) {
+        registerCalled = true
+        
+        if shouldReturnError {
+            completion(.failure(AuthError.registerError("Kullanıcı adı zaten mevcut")))
+        } else {
+            let response = RegisterResponse(message: "User registered successfully")
             completion(.success(response))
         }
     }

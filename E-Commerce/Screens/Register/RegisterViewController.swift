@@ -7,7 +7,7 @@
 
 import UIKit
 
-class RegisterViewController: UIViewController {
+final class RegisterViewController: UIViewController {
     
     // MARK: - UI Components
     private let scrollView = UIScrollView()
@@ -47,8 +47,22 @@ class RegisterViewController: UIViewController {
     private let loginRedirectButton = UIButton(type: .system)
     
     private let orLabel = UILabel()
-    private let googleRegisterButton = UIButton(type: .system)
-    private let facebookRegisterButton = UIButton(type: .system)
+    
+    // MARK: - Properties
+    private let viewModel: RegisterViewModel
+    
+    // MARK: - Initialization
+    init(viewModel: RegisterViewModel = RegisterViewModel()) {
+        self.viewModel = viewModel
+        super.init(nibName: nil, bundle: nil)
+        self.viewModel.delegate = self
+    }
+    
+    required init?(coder: NSCoder) {
+        self.viewModel = RegisterViewModel()
+        super.init(coder: coder)
+        self.viewModel.delegate = self
+    }
     
     // MARK: - Lifecycle
     override func viewDidLoad() {
@@ -168,37 +182,6 @@ class RegisterViewController: UIViewController {
         orLabel.textAlignment = .center
         orLabel.translatesAutoresizingMaskIntoConstraints = false
         contentView.addSubview(orLabel)
-        
-        // Google Register Button
-        googleRegisterButton.setTitle("  Sign up with Google", for: .normal)
-        googleRegisterButton.setTitleColor(.label, for: .normal)
-        googleRegisterButton.titleLabel?.font = UIFont.systemFont(ofSize: 16, weight: .medium)
-        googleRegisterButton.backgroundColor = .systemBackground
-        googleRegisterButton.layer.cornerRadius = 12
-        googleRegisterButton.layer.borderWidth = 1
-        googleRegisterButton.layer.borderColor = UIColor.systemGray4.cgColor
-        
-        if let googleImage = createGoogleIcon() {
-            googleRegisterButton.setImage(googleImage, for: .normal)
-            googleRegisterButton.imageEdgeInsets = UIEdgeInsets(top: 0, left: -8, bottom: 0, right: 8)
-        }
-        
-        googleRegisterButton.translatesAutoresizingMaskIntoConstraints = false
-        contentView.addSubview(googleRegisterButton)
-        
-        // Facebook Register Button
-        facebookRegisterButton.setTitle("  Sign up with Facebook", for: .normal)
-        facebookRegisterButton.setTitleColor(.white, for: .normal)
-        facebookRegisterButton.titleLabel?.font = UIFont.systemFont(ofSize: 16, weight: .medium)
-        facebookRegisterButton.backgroundColor = UIColor(red: 66/255, green: 103/255, blue: 178/255, alpha: 1)
-        facebookRegisterButton.layer.cornerRadius = 12
-        
-        facebookRegisterButton.setImage(UIImage(systemName: "f.circle.fill"), for: .normal)
-        facebookRegisterButton.tintColor = .white
-        facebookRegisterButton.imageEdgeInsets = UIEdgeInsets(top: 0, left: -8, bottom: 0, right: 8)
-        
-        facebookRegisterButton.translatesAutoresizingMaskIntoConstraints = false
-        contentView.addSubview(facebookRegisterButton)
     }
     
     private func setupFormField(label: UILabel, textField: UITextField, container: UIView,
@@ -340,19 +323,7 @@ class RegisterViewController: UIViewController {
             // Or Label
             orLabel.topAnchor.constraint(equalTo: loginRedirectButton.bottomAnchor, constant: 24),
             orLabel.centerXAnchor.constraint(equalTo: contentView.centerXAnchor),
-            
-            // Google Register Button
-            googleRegisterButton.topAnchor.constraint(equalTo: orLabel.bottomAnchor, constant: 24),
-            googleRegisterButton.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 24),
-            googleRegisterButton.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -24),
-            googleRegisterButton.heightAnchor.constraint(equalToConstant: 50),
-            
-            // Facebook Register Button
-            facebookRegisterButton.topAnchor.constraint(equalTo: googleRegisterButton.bottomAnchor, constant: 16),
-            facebookRegisterButton.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 24),
-            facebookRegisterButton.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -24),
-            facebookRegisterButton.heightAnchor.constraint(equalToConstant: 50),
-            facebookRegisterButton.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -40)
+            orLabel.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -32)
         ])
     }
     
@@ -361,169 +332,62 @@ class RegisterViewController: UIViewController {
         showPasswordButton.addTarget(self, action: #selector(togglePasswordVisibility), for: .touchUpInside)
         registerButton.addTarget(self, action: #selector(registerTapped), for: .touchUpInside)
         loginRedirectButton.addTarget(self, action: #selector(loginRedirectTapped), for: .touchUpInside)
-        googleRegisterButton.addTarget(self, action: #selector(googleRegisterTapped), for: .touchUpInside)
-        facebookRegisterButton.addTarget(self, action: #selector(facebookRegisterTapped), for: .touchUpInside)
         
-        // Text field delegates for register button state
-        [firstNameTextField, lastNameTextField, usernameTextField, emailTextField, passwordTextField].forEach {
-            $0.addTarget(self, action: #selector(textFieldDidChange), for: .editingChanged)
-        }
-    }
-    
-    // MARK: - Helper Methods
-    private func createGoogleIcon() -> UIImage? {
-        let size = CGSize(width: 20, height: 20)
-        UIGraphicsBeginImageContextWithOptions(size, false, 0)
-        
-        let context = UIGraphicsGetCurrentContext()
-        context?.setFillColor(UIColor.systemBlue.cgColor)
-        context?.fillEllipse(in: CGRect(origin: .zero, size: size))
-        
-        let attributes: [NSAttributedString.Key: Any] = [
-            .font: UIFont.boldSystemFont(ofSize: 12),
-            .foregroundColor: UIColor.white
-        ]
-        let text = "G"
-        let textSize = text.size(withAttributes: attributes)
-        let textRect = CGRect(
-            x: (size.width - textSize.width) / 2,
-            y: (size.height - textSize.height) / 2,
-            width: textSize.width,
-            height: textSize.height
-        )
-        text.draw(in: textRect, withAttributes: attributes)
-        
-        let image = UIGraphicsGetImageFromCurrentImageContext()
-        UIGraphicsEndImageContext()
-        return image
-    }
-    
-    private func updateRegisterButtonState() {
-        let hasFirstName = !(firstNameTextField.text?.isEmpty ?? true)
-        let hasLastName = !(lastNameTextField.text?.isEmpty ?? true)
-        let hasUsername = !(usernameTextField.text?.isEmpty ?? true)
-        let hasEmail = !(emailTextField.text?.isEmpty ?? true)
-        let hasPassword = !(passwordTextField.text?.isEmpty ?? true)
-        
-        let allFieldsFilled = hasFirstName && hasLastName && hasUsername && hasEmail && hasPassword
-        
-        if allFieldsFilled {
-            registerButton.backgroundColor = .systemBlue
-            registerButton.isEnabled = true
-        } else {
-            registerButton.backgroundColor = .systemGray4
-            registerButton.isEnabled = false
-        }
-    }
-    
-    private func validateInputs() -> Bool {
-        guard let firstName = firstNameTextField.text, !firstName.isEmpty else {
-            showAlert(message: "Please enter your first name")
-            return false
-        }
-        
-        guard let lastName = lastNameTextField.text, !lastName.isEmpty else {
-            showAlert(message: "Please enter your last name")
-            return false
-        }
-        
-        guard let username = usernameTextField.text, !username.isEmpty else {
-            showAlert(message: "Please choose a username")
-            return false
-        }
-        
-        guard let email = emailTextField.text, !email.isEmpty, email.contains("@") else {
-            showAlert(message: "Please enter a valid email address")
-            return false
-        }
-        
-        guard let password = passwordTextField.text, !password.isEmpty, password.count >= 6 else {
-            showAlert(message: "Password must be at least 6 characters long")
-            return false
-        }
-        
-        return true
-    }
-    
-    private func createRegistrationData() -> [String: String] {
-        return [
-            "username": usernameTextField.text ?? "",
-            "email": emailTextField.text ?? "",
-            "password": passwordTextField.text ?? "",
-            "first_name": firstNameTextField.text ?? "",
-            "last_name": lastNameTextField.text ?? ""
-        ]
-    }
-    
-    private func performRegistration(with data: [String: String]) {
-        registerButton.setTitle("Creating Account...", for: .normal)
-        registerButton.isEnabled = false
-        
-        // API çağrısı simülasyonu
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
-            // Registration başarılı - normalde API response'u burada handle ederiz
-            print("Registration Data:", data)
-            
-            // Auto-login after successful registration
-            UserDefaults.standard.set(true, forKey: "isLoggedIn")
-            UserDefaults.standard.set(data["email"], forKey: "userEmail")
-            UserDefaults.standard.set(data["username"], forKey: "username")
-            UserDefaults.standard.set(data["first_name"], forKey: "firstName")
-            UserDefaults.standard.set(data["last_name"], forKey: "lastName")
-            
-            self.navigateToMainApp()
-        }
-    }
-    
-    private func navigateToMainApp() {
-        guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
-              let sceneDelegate = windowScene.delegate as? SceneDelegate else {
-            return
-        }
-        
-        let tabbar = MainTabbarController.createTabBar().tabBarController
-        sceneDelegate.window?.rootViewController = tabbar
-        
-        UIView.transition(with: sceneDelegate.window!, duration: 0.5, options: .transitionCrossDissolve, animations: nil)
-    }
-    
-    private func showAlert(message: String) {
-        let alert = UIAlertController(title: "Error", message: message, preferredStyle: .alert)
-        alert.addAction(UIAlertAction(title: "OK", style: .default))
-        present(alert, animated: true)
+        // Text field delegates for ViewModel binding
+        firstNameTextField.addTarget(self, action: #selector(firstNameChanged), for: .editingChanged)
+        lastNameTextField.addTarget(self, action: #selector(lastNameChanged), for: .editingChanged)
+        usernameTextField.addTarget(self, action: #selector(usernameChanged), for: .editingChanged)
+        emailTextField.addTarget(self, action: #selector(emailChanged), for: .editingChanged)
+        passwordTextField.addTarget(self, action: #selector(passwordChanged), for: .editingChanged)
     }
     
     // MARK: - Actions
     @objc private func togglePasswordVisibility() {
-        passwordTextField.isSecureTextEntry.toggle()
-        let imageName = passwordTextField.isSecureTextEntry ? "eye.slash" : "eye"
-        showPasswordButton.setImage(UIImage(systemName: imageName), for: .normal)
+        viewModel.togglePasswordVisibility()
     }
     
     @objc private func registerTapped() {
-        guard validateInputs() else { return }
-        
-        let registrationData = createRegistrationData()
-        performRegistration(with: registrationData)
+        viewModel.register()
     }
     
     @objc private func loginRedirectTapped() {
-        // Login ekranına geri dön
         navigationController?.popViewController(animated: true)
     }
     
-    @objc private func googleRegisterTapped() {
-        print("Google register tapped")
-        // Google ile kayıt ol functionality
+    @objc private func firstNameChanged() {
+        viewModel.firstName = firstNameTextField.text ?? ""
     }
     
-    @objc private func facebookRegisterTapped() {
-        print("Facebook register tapped")
-        // Facebook ile kayıt ol functionality
+    @objc private func lastNameChanged() {
+        viewModel.lastName = lastNameTextField.text ?? ""
     }
     
-    @objc private func textFieldDidChange() {
-        updateRegisterButtonState()
+    @objc private func usernameChanged() {
+        viewModel.username = usernameTextField.text ?? ""
+    }
+    
+    @objc private func emailChanged() {
+        viewModel.email = emailTextField.text ?? ""
+    }
+    
+    @objc private func passwordChanged() {
+        viewModel.password = passwordTextField.text ?? ""
+    }
+    
+    // MARK: - Helper Methods
+    private func showAlert(title: String = "Error", message: String) {
+        let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "OK", style: .default))
+        present(alert, animated: true)
+    }
+    
+    private func navigateToLoginScreen() {
+        // Registration başarılı olduğunda login ekranına yönlendir
+        let alert = UIAlertController(title: "Success", message: "Registration successful! Please sign in with your new account.", preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "Sign In", style: .default) { [weak self] _ in
+            self?.navigationController?.popViewController(animated: true)
+        })
+        present(alert, animated: true)
     }
     
     // MARK: - Keyboard Handling
@@ -543,12 +407,34 @@ class RegisterViewController: UIViewController {
     }
 }
 
-// MARK: - Navigation Example
-/*
-// Login ekranından register ekranına geçmek için:
-
-@objc private func registerRedirectTapped() {
-    let registerVC = RegisterViewController()
-    navigationController?.pushViewController(registerVC, animated: true)
+// MARK: - RegisterViewModelDelegate
+extension RegisterViewController: RegisterViewModelProtocol {
+    func registerButtonStateChanged(isEnabled: Bool) {
+        registerButton.isEnabled = isEnabled
+        registerButton.backgroundColor = isEnabled ? .systemBlue : .systemGray4
+    }
+    
+    func loadingStateChanged(isLoading: Bool) {
+        registerButton.setTitle(isLoading ? "Creating Account..." : "Create Account", for: .normal)
+        registerButton.isEnabled = !isLoading
+        
+        // Disable all text fields during loading
+        [firstNameTextField, lastNameTextField, usernameTextField, emailTextField, passwordTextField].forEach {
+            $0.isEnabled = !isLoading
+        }
+    }
+    
+    func passwordVisibilityChanged(isVisible: Bool) {
+        passwordTextField.isSecureTextEntry = !isVisible
+        let imageName = isVisible ? "eye" : "eye.slash"
+        showPasswordButton.setImage(UIImage(systemName: imageName), for: .normal)
+    }
+    
+    func registrationCompleted() {
+        navigateToLoginScreen()
+    }
+    
+    func registrationFailed(error: String) {
+        showAlert(message: error)
+    }
 }
-*/

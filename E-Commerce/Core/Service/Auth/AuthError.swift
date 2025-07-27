@@ -22,6 +22,7 @@ enum AuthError: Error, LocalizedError, Equatable {
     case invalidEmail
     case userNotActivated
     case sessionExpired
+    case registerError(String)
     case unknown(String)
     
     var errorDescription: String? {
@@ -52,6 +53,8 @@ enum AuthError: Error, LocalizedError, Equatable {
             return "User account is not activated"
         case .sessionExpired:
             return "Session has expired. Please login again"
+        case .registerError(let message):
+            return message
         case .unknown(let message):
             return "Unknown error: \(message)"
         }
@@ -87,6 +90,8 @@ enum AuthError: Error, LocalizedError, Equatable {
             return "Current session is no longer valid"
         case .unknown:
             return "An unexpected error occurred"
+        case .registerError(_):
+            return "This email is already registered"
         }
     }
     
@@ -118,6 +123,8 @@ enum AuthError: Error, LocalizedError, Equatable {
             return "Please check your email for activation instructions"
         case .unknown:
             return "Please try again or contact support"
+        case .registerError(_):
+            return "This email is already registeredb"
         }
     }
     
