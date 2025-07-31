@@ -286,7 +286,8 @@ extension HomeViewController: UICollectionViewDataSource, UICollectionViewDelega
             selectedProduct = products[indexPath.item]
         }
         
-        let detailViewController = ProductDetailViewController(product: selectedProduct)
+        let productDetailViewModel = ProductDetailViewModel(product: selectedProduct)
+        let detailViewController = ProductDetailViewController(viewModel: productDetailViewModel) //ProductDetailViewController(product: selectedProduct)
         self.navigationController?.pushViewController(detailViewController, animated: true)
     }
 }

@@ -15,6 +15,10 @@ protocol MainTabbarProtocol: AnyObject {
 
 class MainTabbarController: MainTabbarProtocol {
     
+    private var isLoggedIn: Bool {
+        UserDefaults.standard.bool(forKey: "isLoggedIn")
+    }
+    
     let tabBarController: UITabBarController
     
     private init() {
@@ -33,6 +37,14 @@ class MainTabbarController: MainTabbarProtocol {
         let categoryVC = CategoryViewBuilder.generate()
         categoryVC.tabBarItem = UITabBarItem(title: "Kategoriler", image: UIImage(systemName: "square.grid.2x2"), tag: 1)
         
-        tabBarController.viewControllers = [homeVC, categoryVC]
+        var viewControllers: [UIViewController] = [homeVC, categoryVC]
+        
+        if isLoggedIn {
+            let profileVC = ProfileViewController()
+            profileVC.tabBarItem = UITabBarItem(title: "Profil", image: UIImage(systemName: "person"), tag: 2)
+            viewControllers.append(profileVC)
+        }
+        
+        tabBarController.viewControllers = viewControllers
     }
 }

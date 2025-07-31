@@ -120,7 +120,10 @@ final class ProductListViewController: UIViewController {
         }
         
         viewModel.onProductSelected = { [weak self] product in
-            let vc = ProductDetailViewController(product: product)
+            // Önce viewModel oluştur
+            let productDetailViewModel = ProductDetailViewModel(product: product)
+            // Sonra ViewController'ı oluştur
+            let vc = ProductDetailViewController(viewModel: productDetailViewModel)
             self?.navigationController?.pushViewController(vc, animated: true)
         }
     }

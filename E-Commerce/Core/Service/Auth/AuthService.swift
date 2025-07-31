@@ -94,6 +94,7 @@ final class AuthService: AuthServiceProtocol {
     private let tokenKey = "auth_token"
     private let tokenExpiryKey = "token_expiry"
     private let userKey = "current_user"
+    private let isLoggedInKey = "isLoggedIn" // UserDefaults key eklendi
     
     // MARK: - Dependencies (for testability)
     private let keychainHelper: KeychainHelperProtocol
@@ -126,7 +127,16 @@ final class AuthService: AuthServiceProtocol {
     
     // MARK: - AuthServiceProtocol Implementation
     var isLoggedIn: Bool {
-        guard let token = keychainHelper.get(tokenKey) else { return false }
+        // Önce UserDefaults'tan kontrol et
+        let isLoggedInFlag = userDefaults.bool(forKey: isLoggedInKey)
+        
+        guard isLoggedInFlag, let token = keychainHelper.get(tokenKey) else {
+            // Eğer flag false ise veya token yoksa logout yap
+            if isLoggedInFlag {
+                logout() // Sadece flag true ama token yoksa logout yap
+            }
+            return false
+        }
         
         if isJWTTokenExpired(token) {
             logout()
@@ -203,8 +213,13 @@ final class AuthService: AuthServiceProtocol {
                     print("   🎉 Message: \(loginResponse.message)")
                     print("   👤 User: \(loginResponse.user.username)")
                     
+                    // Token ve user bilgilerini kaydet
                     self?.saveToken(loginResponse.token)
                     self?.saveUser(loginResponse.user)
+                    
+                    // UserDefaults'a isLoggedIn flag'ini set et
+                    self?.userDefaults.set(true, forKey: self?.isLoggedInKey ?? "isLoggedIn")
+                    print("✅ isLoggedIn flag set to true")
                     
                     if let expiryDate = self?.getExpiryDateFromJWT(loginResponse.token) {
                         self?.userDefaults.set(expiryDate, forKey: self?.tokenExpiryKey ?? "")
@@ -323,7 +338,8 @@ final class AuthService: AuthServiceProtocol {
         _ = keychainHelper.delete(tokenKey)
         userDefaults.removeObject(forKey: tokenExpiryKey)
         userDefaults.removeObject(forKey: userKey)
-        print("🚪 Kullanıcı çıkış yaptı")
+        userDefaults.set(false, forKey: isLoggedInKey) // isLoggedIn flag'ini false yap
+        print("🚪 Kullanıcı çıkış yaptı - isLoggedIn flag set to false")
     }
     
     func getToken() -> String? {

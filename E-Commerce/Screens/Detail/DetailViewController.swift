@@ -4,16 +4,17 @@
 //
 //  Created by Barış Dilekçi on 21.07.2025.
 //
+
 import Foundation
 import UIKit
 
 class ProductDetailViewController: UIViewController {
     
     // MARK: - Properties
-    private let product: Product
     private var selectedImageIndex = 0
-    private var isFavorite = false
     
+    private let viewModel: ProductDetailViewModel
+
     // MARK: - UI Components
     private lazy var scrollView: UIScrollView = {
         let scrollView = UIScrollView()
@@ -49,7 +50,7 @@ class ProductDetailViewController: UIViewController {
     private lazy var pageControl: UIPageControl = {
         let pageControl = UIPageControl()
         pageControl.translatesAutoresizingMaskIntoConstraints = false
-        pageControl.numberOfPages = product.imageUrls.count
+        pageControl.numberOfPages = viewModel.product.imageUrls.count
         pageControl.currentPage = 0
         pageControl.pageIndicatorTintColor = UIColor.label.withAlphaComponent(0.2)
         pageControl.currentPageIndicatorTintColor = .label
@@ -74,7 +75,7 @@ class ProductDetailViewController: UIViewController {
     private lazy var productNameLabel: UILabel = {
         let label = UILabel()
         label.translatesAutoresizingMaskIntoConstraints = false
-        label.text = product.name
+        label.text = viewModel.product.name
         label.font = UIFont.systemFont(ofSize: 24, weight: .bold)
         label.textColor = .label
         label.numberOfLines = 0
@@ -91,7 +92,7 @@ class ProductDetailViewController: UIViewController {
     private lazy var currentPriceLabel: UILabel = {
         let label = UILabel()
         label.translatesAutoresizingMaskIntoConstraints = false
-        label.text = "₺\(String(format: "%.2f", discountedPrice))"
+        label.text = "₺\(String(format: "%.2f", viewModel.discountedPrice))"
         label.font = UIFont.systemFont(ofSize: 32, weight: .bold)
         label.textColor = .label
         return label
@@ -100,7 +101,7 @@ class ProductDetailViewController: UIViewController {
     private lazy var originalPriceLabel: UILabel = {
         let label = UILabel()
         label.translatesAutoresizingMaskIntoConstraints = false
-        label.text = "₺\(String(format: "%.2f", product.price))"
+        label.text = "₺\(String(format: "%.2f", viewModel.product.price))"
         label.font = UIFont.systemFont(ofSize: 18, weight: .medium)
         label.textColor = .tertiaryLabel
         
@@ -110,7 +111,7 @@ class ProductDetailViewController: UIViewController {
                                     range: NSRange(location: 0, length: attributedString.length))
         label.attributedText = attributedString
         
-        label.isHidden = product.discount <= 0
+        label.isHidden = viewModel.product.discount <= 0
         return label
     }()
     
@@ -119,11 +120,11 @@ class ProductDetailViewController: UIViewController {
         view.translatesAutoresizingMaskIntoConstraints = false
         view.backgroundColor = UIColor.systemRed.withAlphaComponent(0.1)
         view.layer.cornerRadius = 16
-        view.isHidden = product.discount <= 0
+        view.isHidden = !viewModel.hasDiscount
         
         let label = UILabel()
         label.translatesAutoresizingMaskIntoConstraints = false
-        label.text = "%\(Int(product.discount)) indirim"
+        label.text = "%\(Int(viewModel.product.discount)) indirim"
         label.font = UIFont.systemFont(ofSize: 12, weight: .semibold)
         label.textColor = .systemRed
         label.textAlignment = .center
@@ -164,7 +165,7 @@ class ProductDetailViewController: UIViewController {
     private lazy var storeLabel: UILabel = {
         let label = UILabel()
         label.translatesAutoresizingMaskIntoConstraints = false
-        label.text = product.store
+        label.text = viewModel.product.store
         label.font = UIFont.systemFont(ofSize: 16, weight: .medium)
         label.textColor = .label
         return label
@@ -179,10 +180,22 @@ class ProductDetailViewController: UIViewController {
         return label
     }()
     
+    // Sticky button container - sabit buton alanı
+    private lazy var stickyButtonContainer: UIView = {
+        let view = UIView()
+        view.translatesAutoresizingMaskIntoConstraints = false
+        view.backgroundColor = .systemBackground
+        view.layer.shadowColor = UIColor.black.cgColor
+        view.layer.shadowOpacity = 0.1
+        view.layer.shadowOffset = CGSize(width: 0, height: -2)
+        view.layer.shadowRadius = 8
+        return view
+    }()
+    
     private lazy var actionButtonsStackView: UIStackView = {
         let stackView = UIStackView()
         stackView.translatesAutoresizingMaskIntoConstraints = false
-        stackView.axis = .vertical
+        stackView.axis = .horizontal
         stackView.spacing = 12
         stackView.distribution = .fillEqually
         return stackView
@@ -242,7 +255,8 @@ class ProductDetailViewController: UIViewController {
     private lazy var descriptionLabel: UILabel = {
         let label = UILabel()
         label.translatesAutoresizingMaskIntoConstraints = false
-        label.text = product.description
+        label.text = viewModel.product.description
+        label.font = UIFont.systemFont(ofSize: 15, weight: .regular)
         label.textColor = .secondaryLabel
         label.numberOfLines = 0
         label.lineBreakMode = .byWordWrapping
@@ -255,8 +269,6 @@ class ProductDetailViewController: UIViewController {
         return view
     }()
     
-
-    
     private lazy var specificationsStackView: UIStackView = {
         let stackView = UIStackView()
         stackView.translatesAutoresizingMaskIntoConstraints = false
@@ -265,14 +277,10 @@ class ProductDetailViewController: UIViewController {
         return stackView
     }()
     
-    // MARK: - Computed Properties
-    private var discountedPrice: Double {
-        return product.price * (1 - product.discount / 100)
-    }
-    
     // MARK: - Initializer
-    init(product: Product) {
-        self.product = product
+
+    init(viewModel: ProductDetailViewModel) {
+        self.viewModel = viewModel
         super.init(nibName: nil, bundle: nil)
     }
     
@@ -297,7 +305,10 @@ class ProductDetailViewController: UIViewController {
     private func setupUI() {
         view.backgroundColor = .systemBackground
         
+        // Ana container'ları ekle
         view.addSubview(scrollView)
+        view.addSubview(stickyButtonContainer) // Sabit buton container'ını en üste ekle
+        
         scrollView.addSubview(contentView)
         
         contentView.addSubview(imageCollectionView)
@@ -308,7 +319,6 @@ class ProductDetailViewController: UIViewController {
         productInfoContainer.addSubview(priceContainer)
         productInfoContainer.addSubview(dividerView)
         productInfoContainer.addSubview(storeInfoView)
-        productInfoContainer.addSubview(actionButtonsStackView)
         productInfoContainer.addSubview(descriptionSection)
         productInfoContainer.addSubview(specificationsSection)
         
@@ -320,6 +330,8 @@ class ProductDetailViewController: UIViewController {
         storeInfoView.addSubview(storeLabel)
         storeInfoView.addSubview(storeSubtitleLabel)
         
+        // Sticky button container setup
+        stickyButtonContainer.addSubview(actionButtonsStackView)
         actionButtonsStackView.addArrangedSubview(addToCartButton)
         actionButtonsStackView.addArrangedSubview(buyNowButton)
         
@@ -331,17 +343,29 @@ class ProductDetailViewController: UIViewController {
     
     private func setupConstraints() {
         NSLayoutConstraint.activate([
-            // ScrollView
+            // Sticky Button Container - En altta sabit
+            stickyButtonContainer.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            stickyButtonContainer.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            stickyButtonContainer.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor),
+            stickyButtonContainer.heightAnchor.constraint(equalToConstant: 80),
+            
+            // Action Buttons Stack View
+            actionButtonsStackView.topAnchor.constraint(equalTo: stickyButtonContainer.topAnchor, constant: 12),
+            actionButtonsStackView.leadingAnchor.constraint(equalTo: stickyButtonContainer.leadingAnchor, constant: 24),
+            actionButtonsStackView.trailingAnchor.constraint(equalTo: stickyButtonContainer.trailingAnchor, constant: -24),
+            actionButtonsStackView.bottomAnchor.constraint(equalTo: stickyButtonContainer.bottomAnchor, constant: -12),
+            
+            // ScrollView - Sticky button container'ın üstünde bitir
             scrollView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
             scrollView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             scrollView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            scrollView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+            scrollView.bottomAnchor.constraint(equalTo: stickyButtonContainer.topAnchor),
 
             // ContentView
             contentView.topAnchor.constraint(equalTo: scrollView.topAnchor),
             contentView.leadingAnchor.constraint(equalTo: scrollView.leadingAnchor),
             contentView.trailingAnchor.constraint(equalTo: scrollView.trailingAnchor),
-            contentView.bottomAnchor.constraint(equalTo: scrollView.bottomAnchor), // Bu değişti
+            contentView.bottomAnchor.constraint(equalTo: scrollView.bottomAnchor),
             contentView.widthAnchor.constraint(equalTo: scrollView.widthAnchor),
 
             // Image CollectionView
@@ -406,7 +430,7 @@ class ProductDetailViewController: UIViewController {
             storeSubtitleLabel.bottomAnchor.constraint(equalTo: storeInfoView.bottomAnchor, constant: -4),
 
             // Description Section
-            descriptionSection.topAnchor.constraint(equalTo: storeInfoView.bottomAnchor, constant: 40), // Bu değişti
+            descriptionSection.topAnchor.constraint(equalTo: storeInfoView.bottomAnchor, constant: 32),
             descriptionSection.leadingAnchor.constraint(equalTo: productInfoContainer.leadingAnchor, constant: 24),
             descriptionSection.trailingAnchor.constraint(equalTo: productInfoContainer.trailingAnchor, constant: -24),
 
@@ -419,23 +443,20 @@ class ProductDetailViewController: UIViewController {
             descriptionLabel.trailingAnchor.constraint(equalTo: descriptionSection.trailingAnchor),
             descriptionLabel.bottomAnchor.constraint(equalTo: descriptionSection.bottomAnchor),
 
-            // Action Buttons - En alta yerleştirme
-            actionButtonsStackView.topAnchor.constraint(equalTo: descriptionSection.bottomAnchor, constant: 32),
-            actionButtonsStackView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 24),
-            actionButtonsStackView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -24),
-            actionButtonsStackView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -24), // Bu eklendi
+            // Specifications Section - Content'in sonuna kadar
+            specificationsSection.topAnchor.constraint(equalTo: descriptionSection.bottomAnchor, constant: 32),
+            specificationsSection.leadingAnchor.constraint(equalTo: productInfoContainer.leadingAnchor, constant: 24),
+            specificationsSection.trailingAnchor.constraint(equalTo: productInfoContainer.trailingAnchor, constant: -24),
+            specificationsSection.bottomAnchor.constraint(equalTo: productInfoContainer.bottomAnchor, constant: -24),
+            
+            // Product info container'ı content view'ın sonuna bağla
+            productInfoContainer.bottomAnchor.constraint(equalTo: contentView.bottomAnchor),
 
-            addToCartButton.heightAnchor.constraint(equalToConstant: 56),
-            buyNowButton.heightAnchor.constraint(equalToConstant: 56),
-        ])
-    
-
-        NSLayoutConstraint.activate([
+            // Button heights
             addToCartButton.heightAnchor.constraint(equalToConstant: 56),
             buyNowButton.heightAnchor.constraint(equalToConstant: 56),
         ])
     }
-
     
     private func setupNavigationBar() {
         navigationController?.navigationBar.setBackgroundImage(UIImage(), for: .default)
@@ -459,8 +480,6 @@ class ProductDetailViewController: UIViewController {
         
         navigationItem.rightBarButtonItems = [shareButton, favoriteButton]
     }
-    
-
     
     private func createSpecificationView(title: String, value: String) -> UIView {
         let containerView = UIView()
@@ -495,22 +514,50 @@ class ProductDetailViewController: UIViewController {
         return containerView
     }
     
+    private func showLoginAlert() {
+        let alert = UIAlertController(
+            title: "Giriş Yapın",
+            message: "Bu işlem için önce giriş yapmanız gerekmektedir.",
+            preferredStyle: .alert
+        )
+        
+        alert.addAction(UIAlertAction(title: "Giriş Yap", style: .default) { _ in
+            let loginVC = LoginViewController()
+            let navigationController = UINavigationController(rootViewController: loginVC)
+            navigationController.navigationBar.isHidden = true
+            navigationController.modalPresentationStyle = .fullScreen
+            self.present(navigationController, animated: true)
+        })
+        
+        alert.addAction(UIAlertAction(title: "İptal", style: .cancel))
+        
+        present(alert, animated: true)
+    }
+
+
     // MARK: - Actions
     @objc private func favoriteButtonTapped() {
-        isFavorite.toggle()
-        let imageName = isFavorite ? "heart.fill" : "heart"
-        let color = isFavorite ? UIColor.systemRed : UIColor.label
-        
-        navigationItem.rightBarButtonItems?.last?.image = UIImage(systemName: imageName)
-        navigationItem.rightBarButtonItems?.last?.tintColor = color
-        
-        // Haptic feedback
-        let impact = UIImpactFeedbackGenerator(style: .light)
-        impact.impactOccurred()
+        viewModel.performActionIfLoggedIn(
+            action: {
+                self.viewModel.toggleFavorite()
+                let imageName = self.viewModel.isFavorite ? "heart.fill" : "heart"
+                let color = self.viewModel.isFavorite ? UIColor.systemRed : UIColor.label
+                
+                self.navigationItem.rightBarButtonItems?.last?.image = UIImage(systemName: imageName)
+                self.navigationItem.rightBarButtonItems?.last?.tintColor = color
+                
+                // Haptic feedback
+                let impact = UIImpactFeedbackGenerator(style: .light)
+                impact.impactOccurred()
+            },
+            onNotLoggedIn: {
+                self.showLoginAlert()
+            }
+        )
     }
     
     @objc private func shareButtonTapped() {
-        let activityVC = UIActivityViewController(activityItems: [product.name], applicationActivities: nil)
+        let activityVC = UIActivityViewController(activityItems: [viewModel.product.name], applicationActivities: nil)
         present(activityVC, animated: true)
     }
     
@@ -524,30 +571,44 @@ class ProductDetailViewController: UIViewController {
             }
         }
         
-        addToCartButton.setTitle("Sepete Eklendi ✓", for: .normal)
-        addToCartButton.backgroundColor = UIColor.systemGreen.withAlphaComponent(0.1)
-        addToCartButton.layer.borderColor = UIColor.systemGreen.cgColor
-        addToCartButton.setTitleColor(.systemGreen, for: .normal)
-        addToCartButton.isEnabled = false
-        
-        let impact = UIImpactFeedbackGenerator(style: .medium)
-        impact.impactOccurred()
-        
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
-            self.addToCartButton.setTitle("Sepete Ekle", for: .normal)
-            self.addToCartButton.backgroundColor = .quaternarySystemFill
-            self.addToCartButton.layer.borderColor = UIColor.separator.cgColor
-            self.addToCartButton.setTitleColor(.label, for: .normal)
-            self.addToCartButton.isEnabled = true
-        }
+        viewModel.performActionIfLoggedIn(
+            action: {
+                self.addToCartButton.setTitle("Sepete Eklendi ✓", for: .normal)
+                self.addToCartButton.backgroundColor = UIColor.systemGreen.withAlphaComponent(0.1)
+                self.addToCartButton.layer.borderColor = UIColor.systemGreen.cgColor
+                self.addToCartButton.setTitleColor(.systemGreen, for: .normal)
+                self.addToCartButton.isEnabled = false
+
+                let impact = UIImpactFeedbackGenerator(style: .medium)
+                impact.impactOccurred()
+
+                DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+                    self.addToCartButton.setTitle("Sepete Ekle", for: .normal)
+                    self.addToCartButton.backgroundColor = .quaternarySystemFill
+                    self.addToCartButton.layer.borderColor = UIColor.separator.cgColor
+                    self.addToCartButton.setTitleColor(.label, for: .normal)
+                    self.addToCartButton.isEnabled = true
+                }
+            },
+            onNotLoggedIn: {
+                self.showLoginAlert()
+            }
+        )
     }
-    
+
     @objc private func buyNowButtonTapped() {
-        let impact = UIImpactFeedbackGenerator(style: .medium)
-        impact.impactOccurred()
-        
-        // Buy now logic
-        print("Buy now tapped")
+        viewModel.performActionIfLoggedIn(
+            action: {
+                let impact = UIImpactFeedbackGenerator(style: .medium)
+                impact.impactOccurred()
+                
+                // Buy now logic
+                print("Satın alma işlemi başlatılıyor...")
+            },
+            onNotLoggedIn: {
+                self.showLoginAlert()
+            }
+        )
     }
     
     @objc private func buttonTouchDown(_ sender: UIButton) {
@@ -575,12 +636,12 @@ class ProductDetailViewController: UIViewController {
 extension ProductDetailViewController: UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout {
     
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        return product.imageUrls.count
+        return viewModel.product.imageUrls.count
     }
     
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "ProductImageCell", for: indexPath) as! ProductImageCell
-        cell.configure(with: product.imageUrls[indexPath.item])
+        cell.configure(with: viewModel.product.imageUrls[indexPath.item])
         return cell
     }
     
