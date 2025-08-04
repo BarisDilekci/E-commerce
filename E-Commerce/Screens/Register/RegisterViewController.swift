@@ -10,43 +10,222 @@ import UIKit
 final class RegisterViewController: UIViewController {
     
     // MARK: - UI Components
-    private let scrollView = UIScrollView()
-    private let contentView = UIView()
+    private lazy var scrollView: UIScrollView = {
+        let scrollView = UIScrollView()
+        scrollView.translatesAutoresizingMaskIntoConstraints = false
+        return scrollView
+    }()
     
-    private let titleLabel = UILabel()
-    private let subtitleLabel = UILabel()
+    private lazy var contentView: UIView = {
+        let view = UIView()
+        view.translatesAutoresizingMaskIntoConstraints = false
+        return view
+    }()
     
-    // First Name
-    private let firstNameLabel = UILabel()
-    private let firstNameTextField = UITextField()
-    private let firstNameContainerView = UIView()
+    private lazy var titleLabel: UILabel = {
+        let label = UILabel()
+        label.text = "Create your account"
+        label.font = UIFont.systemFont(ofSize: 32, weight: .bold)
+        label.textColor = .label
+        label.translatesAutoresizingMaskIntoConstraints = false
+        return label
+    }()
     
-    // Last Name
-    private let lastNameLabel = UILabel()
-    private let lastNameTextField = UITextField()
-    private let lastNameContainerView = UIView()
+    private lazy var subtitleLabel: UILabel = {
+        let label = UILabel()
+        label.text = "Please fill in the information below."
+        label.font = UIFont.systemFont(ofSize: 16, weight: .regular)
+        label.textColor = .secondaryLabel
+        label.translatesAutoresizingMaskIntoConstraints = false
+        return label
+    }()
     
-    // Username
-    private let usernameLabel = UILabel()
-    private let usernameTextField = UITextField()
-    private let usernameContainerView = UIView()
+    private lazy var firstNameLabel: UILabel = {
+        let label = UILabel()
+        label.text = "First Name"
+        label.font = UIFont.systemFont(ofSize: 16, weight: .medium)
+        label.textColor = .label
+        label.translatesAutoresizingMaskIntoConstraints = false
+        return label
+    }()
     
-    // Email
-    private let emailLabel = UILabel()
-    private let emailTextField = UITextField()
-    private let emailContainerView = UIView()
+    private lazy var firstNameContainerView: UIView = {
+        let view = UIView()
+        view.backgroundColor = .systemGray6
+        view.layer.cornerRadius = 12
+        view.translatesAutoresizingMaskIntoConstraints = false
+        return view
+    }()
     
-    // Password
-    private let passwordLabel = UILabel()
-    private let passwordTextField = UITextField()
-    private let passwordContainerView = UIView()
-    private let showPasswordButton = UIButton(type: .custom)
+    private lazy var firstNameTextField: UITextField = {
+        let textField = UITextField()
+        textField.placeholder = "Enter your first name"
+        textField.font = UIFont.systemFont(ofSize: 16)
+        textField.textColor = .label
+        textField.autocapitalizationType = .words
+        textField.autocorrectionType = .no
+        textField.translatesAutoresizingMaskIntoConstraints = false
+        return textField
+    }()
     
-    // Buttons
-    private let registerButton = UIButton(type: .system)
-    private let loginRedirectButton = UIButton(type: .system)
+    private lazy var lastNameLabel: UILabel = {
+        let label = UILabel()
+        label.text = "Last Name"
+        label.font = UIFont.systemFont(ofSize: 16, weight: .medium)
+        label.textColor = .label
+        label.translatesAutoresizingMaskIntoConstraints = false
+        return label
+    }()
     
-    private let orLabel = UILabel()
+    private lazy var lastNameContainerView: UIView = {
+        let view = UIView()
+        view.backgroundColor = .systemGray6
+        view.layer.cornerRadius = 12
+        view.translatesAutoresizingMaskIntoConstraints = false
+        return view
+    }()
+    
+    private lazy var lastNameTextField: UITextField = {
+        let textField = UITextField()
+        textField.placeholder = "Enter your last name"
+        textField.font = UIFont.systemFont(ofSize: 16)
+        textField.textColor = .label
+        textField.autocapitalizationType = .words
+        textField.autocorrectionType = .no
+        textField.translatesAutoresizingMaskIntoConstraints = false
+        return textField
+    }()
+    
+    private lazy var usernameLabel: UILabel = {
+        let label = UILabel()
+        label.text = "Username"
+        label.font = UIFont.systemFont(ofSize: 16, weight: .medium)
+        label.textColor = .label
+        label.translatesAutoresizingMaskIntoConstraints = false
+        return label
+    }()
+    
+    private lazy var usernameContainerView: UIView = {
+        let view = UIView()
+        view.backgroundColor = .systemGray6
+        view.layer.cornerRadius = 12
+        view.translatesAutoresizingMaskIntoConstraints = false
+        return view
+    }()
+    
+    private lazy var usernameTextField: UITextField = {
+        let textField = UITextField()
+        textField.placeholder = "Choose a username"
+        textField.font = UIFont.systemFont(ofSize: 16)
+        textField.textColor = .label
+        textField.autocapitalizationType = .none
+        textField.autocorrectionType = .no
+        textField.translatesAutoresizingMaskIntoConstraints = false
+        return textField
+    }()
+    
+    private lazy var emailLabel: UILabel = {
+        let label = UILabel()
+        label.text = "Email"
+        label.font = UIFont.systemFont(ofSize: 16, weight: .medium)
+        label.textColor = .label
+        label.translatesAutoresizingMaskIntoConstraints = false
+        return label
+    }()
+    
+    private lazy var emailContainerView: UIView = {
+        let view = UIView()
+        view.backgroundColor = .systemGray6
+        view.layer.cornerRadius = 12
+        view.translatesAutoresizingMaskIntoConstraints = false
+        return view
+    }()
+    
+    private lazy var emailTextField: UITextField = {
+        let textField = UITextField()
+        textField.placeholder = "Enter your email address"
+        textField.font = UIFont.systemFont(ofSize: 16)
+        textField.textColor = .label
+        textField.keyboardType = .emailAddress
+        textField.autocapitalizationType = .none
+        textField.autocorrectionType = .no
+        textField.translatesAutoresizingMaskIntoConstraints = false
+        return textField
+    }()
+    
+    private lazy var passwordLabel: UILabel = {
+        let label = UILabel()
+        label.text = "Password"
+        label.font = UIFont.systemFont(ofSize: 16, weight: .medium)
+        label.textColor = .label
+        label.translatesAutoresizingMaskIntoConstraints = false
+        return label
+    }()
+    
+    private lazy var passwordContainerView: UIView = {
+        let view = UIView()
+        view.backgroundColor = .systemGray6
+        view.layer.cornerRadius = 12
+        view.translatesAutoresizingMaskIntoConstraints = false
+        return view
+    }()
+    
+    private lazy var passwordTextField: UITextField = {
+        let textField = UITextField()
+        textField.placeholder = "Create a strong password"
+        textField.font = UIFont.systemFont(ofSize: 16)
+        textField.textColor = .label
+        textField.isSecureTextEntry = true
+        textField.translatesAutoresizingMaskIntoConstraints = false
+        return textField
+    }()
+    
+    private lazy var showPasswordButton: UIButton = {
+        let button = UIButton(type: .custom)
+        button.setImage(UIImage(systemName: "eye.slash"), for: .normal)
+        button.tintColor = .systemGray
+        button.translatesAutoresizingMaskIntoConstraints = false
+        return button
+    }()
+    
+    private lazy var registerButton: UIButton = {
+        let button = UIButton(type: .system)
+        button.setTitle("Create Account", for: .normal)
+        button.backgroundColor = .systemGray4
+        button.setTitleColor(.white, for: .normal)
+        button.titleLabel?.font = UIFont.systemFont(ofSize: 16, weight: .medium)
+        button.layer.cornerRadius = 12
+        button.isEnabled = false
+        button.translatesAutoresizingMaskIntoConstraints = false
+        return button
+    }()
+    
+    private lazy var loginRedirectButton: UIButton = {
+        let button = UIButton(type: .system)
+        let alreadyText = "Already have an account? "
+        let loginText = "Sign in"
+        let attributedString = NSMutableAttributedString(string: alreadyText + loginText)
+        
+        attributedString.addAttribute(.foregroundColor, value: UIColor.secondaryLabel, range: NSRange(location: 0, length: alreadyText.count))
+        attributedString.addAttribute(.foregroundColor, value: UIColor.systemBlue, range: NSRange(location: alreadyText.count, length: loginText.count))
+        attributedString.addAttribute(.underlineStyle, value: NSUnderlineStyle.single.rawValue, range: NSRange(location: alreadyText.count, length: loginText.count))
+        
+        button.setAttributedTitle(attributedString, for: .normal)
+        button.titleLabel?.font = UIFont.systemFont(ofSize: 14)
+        button.contentHorizontalAlignment = .center
+        button.translatesAutoresizingMaskIntoConstraints = false
+        return button
+    }()
+    
+    private lazy var orLabel: UILabel = {
+        let label = UILabel()
+        label.text = "Or"
+        label.font = UIFont.systemFont(ofSize: 14)
+        label.textColor = .secondaryLabel
+        label.textAlignment = .center
+        label.translatesAutoresizingMaskIntoConstraints = false
+        return label
+    }()
     
     // MARK: - Properties
     private let viewModel: RegisterViewModel
@@ -70,10 +249,7 @@ final class RegisterViewController: UIViewController {
         setupUI()
         setupConstraints()
         setupActions()
-        
-        // Keyboard handling
-        NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillShow), name: UIResponder.keyboardWillShowNotification, object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillHide), name: UIResponder.keyboardWillHideNotification, object: nil)
+        setupKeyboardHandling()
     }
     
     deinit {
@@ -84,129 +260,34 @@ final class RegisterViewController: UIViewController {
     private func setupUI() {
         view.backgroundColor = .systemBackground
         
-        // Setup scroll view
-        scrollView.translatesAutoresizingMaskIntoConstraints = false
-        contentView.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(scrollView)
         scrollView.addSubview(contentView)
-        
-        // Title Label
-        titleLabel.text = "Create your account"
-        titleLabel.font = UIFont.systemFont(ofSize: 32, weight: .bold)
-        titleLabel.textColor = .label
-        titleLabel.translatesAutoresizingMaskIntoConstraints = false
         contentView.addSubview(titleLabel)
-        
-        // Subtitle Label
-        subtitleLabel.text = "Please fill in the information below."
-        subtitleLabel.font = UIFont.systemFont(ofSize: 16, weight: .regular)
-        subtitleLabel.textColor = .secondaryLabel
-        subtitleLabel.translatesAutoresizingMaskIntoConstraints = false
         contentView.addSubview(subtitleLabel)
-        
-        // Setup all form fields
-        setupFormField(label: firstNameLabel, textField: firstNameTextField, container: firstNameContainerView,
-                      labelText: "First Name", placeholder: "Enter your first name")
-        
-        setupFormField(label: lastNameLabel, textField: lastNameTextField, container: lastNameContainerView,
-                      labelText: "Last Name", placeholder: "Enter your last name")
-        
-        setupFormField(label: usernameLabel, textField: usernameTextField, container: usernameContainerView,
-                      labelText: "Username", placeholder: "Choose a username")
-        
-        setupFormField(label: emailLabel, textField: emailTextField, container: emailContainerView,
-                      labelText: "Email", placeholder: "Enter your email address")
-        
-        // Email specific settings
-        emailTextField.keyboardType = .emailAddress
-        emailTextField.autocapitalizationType = .none
-        emailTextField.autocorrectionType = .no
-        
-        // Username specific settings
-        usernameTextField.autocapitalizationType = .none
-        usernameTextField.autocorrectionType = .no
-        
-        // Password Field (special handling)
-        passwordLabel.text = "Password"
-        passwordLabel.font = UIFont.systemFont(ofSize: 16, weight: .medium)
-        passwordLabel.textColor = .label
-        passwordLabel.translatesAutoresizingMaskIntoConstraints = false
+        contentView.addSubview(firstNameLabel)
+        contentView.addSubview(firstNameContainerView)
+        firstNameContainerView.addSubview(firstNameTextField)
+        contentView.addSubview(lastNameLabel)
+        contentView.addSubview(lastNameContainerView)
+        lastNameContainerView.addSubview(lastNameTextField)
+        contentView.addSubview(usernameLabel)
+        contentView.addSubview(usernameContainerView)
+        usernameContainerView.addSubview(usernameTextField)
+        contentView.addSubview(emailLabel)
+        contentView.addSubview(emailContainerView)
+        emailContainerView.addSubview(emailTextField)
         contentView.addSubview(passwordLabel)
-        
-        passwordContainerView.backgroundColor = .systemGray6
-        passwordContainerView.layer.cornerRadius = 12
-        passwordContainerView.translatesAutoresizingMaskIntoConstraints = false
         contentView.addSubview(passwordContainerView)
-        
-        passwordTextField.placeholder = "Create a strong password"
-        passwordTextField.font = UIFont.systemFont(ofSize: 16)
-        passwordTextField.textColor = .label
-        passwordTextField.isSecureTextEntry = true
-        passwordTextField.translatesAutoresizingMaskIntoConstraints = false
         passwordContainerView.addSubview(passwordTextField)
-        
-        showPasswordButton.setImage(UIImage(systemName: "eye.slash"), for: .normal)
-        showPasswordButton.tintColor = .systemGray
-        showPasswordButton.translatesAutoresizingMaskIntoConstraints = false
         passwordContainerView.addSubview(showPasswordButton)
-        
-        // Register Button
-        registerButton.setTitle("Create Account", for: .normal)
-        registerButton.backgroundColor = .systemGray4
-        registerButton.setTitleColor(.white, for: .normal)
-        registerButton.titleLabel?.font = UIFont.systemFont(ofSize: 16, weight: .medium)
-        registerButton.layer.cornerRadius = 12
-        registerButton.isEnabled = false
-        registerButton.translatesAutoresizingMaskIntoConstraints = false
         contentView.addSubview(registerButton)
-        
-        // Login redirect button
-        let alreadyText = "Already have an account? "
-        let loginText = "Sign in"
-        let attributedString = NSMutableAttributedString(string: alreadyText + loginText)
-        
-        attributedString.addAttribute(.foregroundColor, value: UIColor.secondaryLabel, range: NSRange(location: 0, length: alreadyText.count))
-        attributedString.addAttribute(.foregroundColor, value: UIColor.systemBlue, range: NSRange(location: alreadyText.count, length: loginText.count))
-        attributedString.addAttribute(.underlineStyle, value: NSUnderlineStyle.single.rawValue, range: NSRange(location: alreadyText.count, length: loginText.count))
-        
-        loginRedirectButton.setAttributedTitle(attributedString, for: .normal)
-        loginRedirectButton.titleLabel?.font = UIFont.systemFont(ofSize: 14)
-        loginRedirectButton.contentHorizontalAlignment = .center
-        loginRedirectButton.translatesAutoresizingMaskIntoConstraints = false
         contentView.addSubview(loginRedirectButton)
-        
-        // Or Label
-        orLabel.text = "Or"
-        orLabel.font = UIFont.systemFont(ofSize: 14)
-        orLabel.textColor = .secondaryLabel
-        orLabel.textAlignment = .center
-        orLabel.translatesAutoresizingMaskIntoConstraints = false
         contentView.addSubview(orLabel)
     }
     
-    private func setupFormField(label: UILabel, textField: UITextField, container: UIView,
-                               labelText: String, placeholder: String) {
-        // Label
-        label.text = labelText
-        label.font = UIFont.systemFont(ofSize: 16, weight: .medium)
-        label.textColor = .label
-        label.translatesAutoresizingMaskIntoConstraints = false
-        contentView.addSubview(label)
-        
-        // Container
-        container.backgroundColor = .systemGray6
-        container.layer.cornerRadius = 12
-        container.translatesAutoresizingMaskIntoConstraints = false
-        contentView.addSubview(container)
-        
-        // TextField
-        textField.placeholder = placeholder
-        textField.font = UIFont.systemFont(ofSize: 16)
-        textField.textColor = .label
-        textField.autocapitalizationType = .words
-        textField.autocorrectionType = .no
-        textField.translatesAutoresizingMaskIntoConstraints = false
-        container.addSubview(textField)
+    private func setupKeyboardHandling() {
+        NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillShow), name: UIResponder.keyboardWillShowNotification, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillHide), name: UIResponder.keyboardWillHideNotification, object: nil)
     }
     
     // MARK: - Setup Constraints
@@ -333,7 +414,6 @@ final class RegisterViewController: UIViewController {
         registerButton.addTarget(self, action: #selector(registerTapped), for: .touchUpInside)
         loginRedirectButton.addTarget(self, action: #selector(loginRedirectTapped), for: .touchUpInside)
         
-        // Text field delegates for ViewModel binding
         firstNameTextField.addTarget(self, action: #selector(firstNameChanged), for: .editingChanged)
         lastNameTextField.addTarget(self, action: #selector(lastNameChanged), for: .editingChanged)
         usernameTextField.addTarget(self, action: #selector(usernameChanged), for: .editingChanged)
@@ -382,7 +462,6 @@ final class RegisterViewController: UIViewController {
     }
     
     private func navigateToLoginScreen() {
-        // Registration başarılı olduğunda login ekranına yönlendir
         let alert = UIAlertController(title: "Success", message: "Registration successful! Please sign in with your new account.", preferredStyle: .alert)
         alert.addAction(UIAlertAction(title: "Sign In", style: .default) { [weak self] _ in
             self?.navigationController?.popViewController(animated: true)
@@ -418,7 +497,6 @@ extension RegisterViewController: RegisterViewModelProtocol {
         registerButton.setTitle(isLoading ? "Creating Account..." : "Create Account", for: .normal)
         registerButton.isEnabled = !isLoading
         
-        // Disable all text fields during loading
         [firstNameTextField, lastNameTextField, usernameTextField, emailTextField, passwordTextField].forEach {
             $0.isEnabled = !isLoading
         }

@@ -16,7 +16,7 @@ enum HomeViewBuilder {
       }
 }
 
-class HomeViewController: UIViewController {
+final class HomeViewController: UIViewController {
     
     private let viewModel: HomeViewModel
     
@@ -33,10 +33,10 @@ class HomeViewController: UIViewController {
     private var filteredProducts: [Product] = []
     private var sliderImages: [String] = []
     private var isSearching = false
-    private let emptyStateView = EmptyStateView(message: "Gösterilecek ürün bulunamadı.")
+    private lazy var emptyStateView = EmptyStateView(message: "Gösterilecek ürün bulunamadı.")
 
     
-    private let searchBar: UISearchBar = {
+    private lazy var searchBar: UISearchBar = {
         let sb = UISearchBar()
         sb.translatesAutoresizingMaskIntoConstraints = false
         sb.placeholder = "Ürün ara..."
@@ -45,7 +45,7 @@ class HomeViewController: UIViewController {
         return sb
     }()
     
-    private let collectionView: UICollectionView = {
+    private lazy var collectionView: UICollectionView = {
         let layout = UICollectionViewFlowLayout()
         layout.minimumLineSpacing = 16
         layout.minimumInteritemSpacing = 12

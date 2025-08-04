@@ -27,7 +27,7 @@ final class ProductListViewController: UIViewController {
     private let viewModel: ProductListViewModel
     private var products: [Product] = []
     
-    private let collectionView: UICollectionView = {
+    private lazy var collectionView: UICollectionView = {
         let layout = UICollectionViewFlowLayout()
         layout.minimumLineSpacing = 16
         layout.minimumInteritemSpacing = 12
@@ -40,7 +40,7 @@ final class ProductListViewController: UIViewController {
         return cv
     }()
     
-    private let emptyStateView: UILabel = {
+    private lazy var emptyStateView: UILabel = {
         let label = UILabel()
         label.text = "Hiç ürün bulunamadı."
         label.textAlignment = .center

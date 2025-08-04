@@ -4,20 +4,27 @@
 //
 //  Created by Barış Dilekçi on 9.07.2025.
 //
-
 import Foundation
 
-enum APIEndpoint {
-    static let baseURL = "http://localhost:8080/api/v1"
+enum HTTPMethod: String {
+    case get = "GET"
+    case post = "POST"
+    case put = "PUT"
+    case delete = "DELETE"
+}
 
+enum APIEndpoint {
     case products
     case productsByCategory(id: Int)
     case category
-    
     case login
     case register
     case logout
     case refreshToken
+
+    var baseURL: String {
+        return "http://localhost:8080/api/v1"
+    }
 
     var path: String {
         switch self {
@@ -27,8 +34,6 @@ enum APIEndpoint {
             return "/categories/\(id)/products"
         case .category:
             return "/categories"
-            
-        // Auth paths
         case .login:
             return "/auth/login"
         case .register:
@@ -41,15 +46,24 @@ enum APIEndpoint {
     }
 
     var url: URL? {
-        return URL(string: APIEndpoint.baseURL + path)
+        return URL(string: baseURL + path)
     }
-    
-    var httpMethod: String {
+
+    var method: HTTPMethod {
         switch self {
         case .products, .productsByCategory, .category:
-            return "GET"
+            return .get
         case .login, .register, .logout, .refreshToken:
-            return "POST"
+            return .post
+        }
+    }
+
+    var headers: [String: String] {
+        switch self {
+        case .login, .register:
+            return ["Content-Type": "application/json"]
+        default:
+            return [:]
         }
     }
 }

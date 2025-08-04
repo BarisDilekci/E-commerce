@@ -148,7 +148,7 @@ final class LoginViewModel {
     }
     
     private func handleLoginError(_ error: Error) {
-        if let authError = error as? AuthService.AuthError {
+        if let authError = error as? AuthError {
             switch authError {
             case .invalidCredentials:
                 delegate?.shouldHighlightField(.username, isError: true)
@@ -184,7 +184,7 @@ final class LoginViewModel {
     
     // MARK: - Helper Methods
     func getErrorMessage(from error: Error) -> String {
-        if let authError = error as? AuthService.AuthError {
+        if let authError = error as? AuthError {
             return authError.localizedDescription
         }
         

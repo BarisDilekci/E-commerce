@@ -10,27 +10,161 @@ import UIKit
 final class LoginViewController: UIViewController {
     
     // MARK: - UI Components
-    private let scrollView = UIScrollView()
-    private let contentView = UIView()
+    private lazy var scrollView: UIScrollView = {
+        let scrollView = UIScrollView()
+        scrollView.translatesAutoresizingMaskIntoConstraints = false
+        scrollView.showsVerticalScrollIndicator = false
+        return scrollView
+    }()
     
-    private let titleLabel = UILabel()
-    private let subtitleLabel = UILabel()
+    private lazy var contentView: UIView = {
+        let view = UIView()
+        view.translatesAutoresizingMaskIntoConstraints = false
+        return view
+    }()
     
-    private let emailLabel = UILabel()
-    private let emailTextField = UITextField()
-    private let emailContainerView = UIView()
+    private lazy var titleLabel: UILabel = {
+        let label = UILabel()
+        label.text = "Login to your account"
+        label.font = UIFont.systemFont(ofSize: 32, weight: .bold)
+        label.textColor = .label
+        label.numberOfLines = 0
+        label.translatesAutoresizingMaskIntoConstraints = false
+        return label
+    }()
     
-    private let passwordLabel = UILabel()
-    private let passwordTextField = UITextField()
-    private let passwordContainerView = UIView()
-    private let showPasswordButton = UIButton(type: .custom)
+    private lazy var subtitleLabel: UILabel = {
+        let label = UILabel()
+        label.text = "It's great to see you again."
+        label.font = UIFont.systemFont(ofSize: 16, weight: .regular)
+        label.textColor = .secondaryLabel
+        label.numberOfLines = 0
+        label.translatesAutoresizingMaskIntoConstraints = false
+        return label
+    }()
     
-    private let createAccountButton = UIButton(type: .system)
-    private let loginButton = UIButton(type: .system)
-    private let guestButton = UIButton(type: .system)
+    private lazy var emailLabel: UILabel = {
+        let label = UILabel()
+        label.text = "Username"
+        label.font = UIFont.systemFont(ofSize: 16, weight: .medium)
+        label.textColor = .label
+        label.translatesAutoresizingMaskIntoConstraints = false
+        return label
+    }()
+
+    private lazy var emailContainerView: UIView = {
+        let view = UIView()
+        view.backgroundColor = .systemGray6
+        view.layer.cornerRadius = 12
+        view.layer.borderWidth = 1
+        view.layer.borderColor = UIColor.clear.cgColor
+        view.translatesAutoresizingMaskIntoConstraints = false
+        return view
+    }()
+
+    private lazy var emailTextField: UITextField = {
+        let textField = UITextField()
+        textField.placeholder = "Enter your username"
+        textField.font = UIFont.systemFont(ofSize: 16)
+        textField.textColor = .label
+        textField.autocapitalizationType = .none
+        textField.autocorrectionType = .no
+        textField.keyboardType = .default
+        textField.returnKeyType = .next
+        textField.delegate = self
+        textField.translatesAutoresizingMaskIntoConstraints = false
+        return textField
+    }()
+
+    private lazy var passwordLabel: UILabel = {
+        let label = UILabel()
+        label.text = "Password"
+        label.font = UIFont.systemFont(ofSize: 16, weight: .medium)
+        label.textColor = .label
+        label.translatesAutoresizingMaskIntoConstraints = false
+        return label
+    }()
     
+    private lazy var passwordContainerView: UIView = {
+        let view = UIView()
+        view.backgroundColor = .systemGray6
+        view.layer.cornerRadius = 12
+        view.layer.borderWidth = 1
+        view.layer.borderColor = UIColor.clear.cgColor
+        view.translatesAutoresizingMaskIntoConstraints = false
+        return view
+    }()
+
+    private lazy var passwordTextField: UITextField = {
+        let textField = UITextField()
+        textField.placeholder = "Enter your password"
+        textField.font = UIFont.systemFont(ofSize: 16)
+        textField.textColor = .label
+        textField.isSecureTextEntry = true
+        textField.returnKeyType = .done
+        textField.delegate = self
+        textField.translatesAutoresizingMaskIntoConstraints = false
+        return textField
+    }()
+
+    private lazy var showPasswordButton: UIButton = {
+        let button = UIButton(type: .custom)
+        button.setImage(UIImage(systemName: "eye.slash"), for: .normal)
+        button.tintColor = .systemGray
+        button.translatesAutoresizingMaskIntoConstraints = false
+        return button
+    }()
+    
+    private lazy var createAccountButton: UIButton = {
+        let button = UIButton(type: .system)
+        let base = "Don't have an account? "
+        let action = "Create account"
+        let attr = NSMutableAttributedString(string: base + action)
+        attr.addAttribute(.foregroundColor, value: UIColor.secondaryLabel, range: NSRange(location: 0, length: base.count))
+        attr.addAttribute(.foregroundColor, value: UIColor.systemBlue, range: NSRange(location: base.count, length: action.count))
+        attr.addAttribute(.underlineStyle, value: NSUnderlineStyle.single.rawValue, range: NSRange(location: base.count, length: action.count))
+        button.setAttributedTitle(attr, for: .normal)
+        button.titleLabel?.font = UIFont.systemFont(ofSize: 14)
+        button.contentHorizontalAlignment = .center
+        button.translatesAutoresizingMaskIntoConstraints = false
+        return button
+    }()
+
+    private lazy var loginButton: UIButton = {
+        let button = UIButton(type: .system)
+        button.setTitle("Login", for: .normal)
+        button.backgroundColor = .systemGray4
+        button.setTitleColor(.white, for: .normal)
+        button.titleLabel?.font = UIFont.systemFont(ofSize: 16, weight: .medium)
+        button.layer.cornerRadius = 12
+        button.isEnabled = false
+        button.translatesAutoresizingMaskIntoConstraints = false
+        return button
+    }()
+
+    private lazy var guestButton: UIButton = {
+        let button = UIButton(type: .system)
+        let base = "Continue as "
+        let guest = "Guest"
+        let attr = NSMutableAttributedString(string: base + guest)
+        attr.addAttribute(.foregroundColor, value: UIColor.secondaryLabel, range: NSRange(location: 0, length: base.count))
+        attr.addAttribute(.foregroundColor, value: UIColor.systemGray, range: NSRange(location: base.count, length: guest.count))
+        attr.addAttribute(.underlineStyle, value: NSUnderlineStyle.single.rawValue, range: NSRange(location: base.count, length: guest.count))
+        button.setAttributedTitle(attr, for: .normal)
+        button.titleLabel?.font = UIFont.systemFont(ofSize: 14)
+        button.contentHorizontalAlignment = .center
+        button.translatesAutoresizingMaskIntoConstraints = false
+        return button
+    }()
+
     // MARK: - Loading Indicator
-    private let loadingIndicator = UIActivityIndicatorView(style: .medium)
+    private lazy var loadingIndicator: UIActivityIndicatorView = {
+        let indicator = UIActivityIndicatorView(style: .medium)
+        indicator.translatesAutoresizingMaskIntoConstraints = false
+        indicator.hidesWhenStopped = true
+        indicator.color = .white
+        return indicator
+    }()
     
     // MARK: - ViewModel
     private let viewModel = LoginViewModel()
@@ -62,132 +196,23 @@ final class LoginViewController: UIViewController {
     private func setupUI() {
         view.backgroundColor = .systemBackground
         
-        // Setup scroll view
-        scrollView.translatesAutoresizingMaskIntoConstraints = false
-        scrollView.showsVerticalScrollIndicator = false
-        contentView.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(scrollView)
         scrollView.addSubview(contentView)
-        
-        // Title Label
-        titleLabel.text = "Login to your account"
-        titleLabel.font = UIFont.systemFont(ofSize: 32, weight: .bold)
-        titleLabel.textColor = .label
-        titleLabel.numberOfLines = 0
-        titleLabel.translatesAutoresizingMaskIntoConstraints = false
         contentView.addSubview(titleLabel)
-        
-        // Subtitle Label
-        subtitleLabel.text = "It's great to see you again."
-        subtitleLabel.font = UIFont.systemFont(ofSize: 16, weight: .regular)
-        subtitleLabel.textColor = .secondaryLabel
-        subtitleLabel.numberOfLines = 0
-        subtitleLabel.translatesAutoresizingMaskIntoConstraints = false
         contentView.addSubview(subtitleLabel)
-        
-        // Email Label
-        emailLabel.text = "Username"
-        emailLabel.font = UIFont.systemFont(ofSize: 16, weight: .medium)
-        emailLabel.textColor = .label
-        emailLabel.translatesAutoresizingMaskIntoConstraints = false
         contentView.addSubview(emailLabel)
-        
-        // Email Container
-        emailContainerView.backgroundColor = .systemGray6
-        emailContainerView.layer.cornerRadius = 12
-        emailContainerView.layer.borderWidth = 1
-        emailContainerView.layer.borderColor = UIColor.clear.cgColor
-        emailContainerView.translatesAutoresizingMaskIntoConstraints = false
         contentView.addSubview(emailContainerView)
-        
-        // Email TextField
-        emailTextField.placeholder = "Enter your username"
-        emailTextField.font = UIFont.systemFont(ofSize: 16)
-        emailTextField.textColor = .label
-        emailTextField.autocapitalizationType = .none
-        emailTextField.autocorrectionType = .no
-        emailTextField.keyboardType = .default
-        emailTextField.returnKeyType = .next
-        emailTextField.delegate = self
-        emailTextField.translatesAutoresizingMaskIntoConstraints = false
         emailContainerView.addSubview(emailTextField)
-        
-        // Password Label
-        passwordLabel.text = "Password"
-        passwordLabel.font = UIFont.systemFont(ofSize: 16, weight: .medium)
-        passwordLabel.textColor = .label
-        passwordLabel.translatesAutoresizingMaskIntoConstraints = false
         contentView.addSubview(passwordLabel)
-        
-        // Password Container
-        passwordContainerView.backgroundColor = .systemGray6
-        passwordContainerView.layer.cornerRadius = 12
-        passwordContainerView.layer.borderWidth = 1
-        passwordContainerView.layer.borderColor = UIColor.clear.cgColor
-        passwordContainerView.translatesAutoresizingMaskIntoConstraints = false
         contentView.addSubview(passwordContainerView)
-        
-        // Password TextField
-        passwordTextField.placeholder = "Enter your password"
-        passwordTextField.font = UIFont.systemFont(ofSize: 16)
-        passwordTextField.textColor = .label
-        passwordTextField.isSecureTextEntry = true
-        passwordTextField.returnKeyType = .done
-        passwordTextField.delegate = self
-        passwordTextField.translatesAutoresizingMaskIntoConstraints = false
         passwordContainerView.addSubview(passwordTextField)
-        
-        // Show Password Button
-        showPasswordButton.setImage(UIImage(systemName: "eye.slash"), for: .normal)
-        showPasswordButton.tintColor = .systemGray
-        showPasswordButton.translatesAutoresizingMaskIntoConstraints = false
         passwordContainerView.addSubview(showPasswordButton)
-        
-        // Create Account Button
-        let dontHaveText = "Don't have an account? "
-        let createText = "Create account"
-        let attributedString = NSMutableAttributedString(string: dontHaveText + createText)
-        
-        attributedString.addAttribute(.foregroundColor, value: UIColor.secondaryLabel, range: NSRange(location: 0, length: dontHaveText.count))
-        attributedString.addAttribute(.foregroundColor, value: UIColor.systemBlue, range: NSRange(location: dontHaveText.count, length: createText.count))
-        attributedString.addAttribute(.underlineStyle, value: NSUnderlineStyle.single.rawValue, range: NSRange(location: dontHaveText.count, length: createText.count))
-        
-        createAccountButton.setAttributedTitle(attributedString, for: .normal)
-        createAccountButton.titleLabel?.font = UIFont.systemFont(ofSize: 14)
-        createAccountButton.contentHorizontalAlignment = .center
-        createAccountButton.translatesAutoresizingMaskIntoConstraints = false
         contentView.addSubview(createAccountButton)
-        
-        // Login Button
-        loginButton.setTitle("Login", for: .normal)
-        loginButton.backgroundColor = .systemGray4
-        loginButton.setTitleColor(.white, for: .normal)
-        loginButton.titleLabel?.font = UIFont.systemFont(ofSize: 16, weight: .medium)
-        loginButton.layer.cornerRadius = 12
-        loginButton.isEnabled = false
-        loginButton.translatesAutoresizingMaskIntoConstraints = false
         contentView.addSubview(loginButton)
-        
-        // Guest Button
-        let continueText = "Continue as "
-        let guestText = "Guest"
-        let guestAttributedString = NSMutableAttributedString(string: continueText + guestText)
-        
-        guestAttributedString.addAttribute(.foregroundColor, value: UIColor.secondaryLabel, range: NSRange(location: 0, length: continueText.count))
-        guestAttributedString.addAttribute(.foregroundColor, value: UIColor.systemGray, range: NSRange(location: continueText.count, length: guestText.count))
-        guestAttributedString.addAttribute(.underlineStyle, value: NSUnderlineStyle.single.rawValue, range: NSRange(location: continueText.count, length: guestText.count))
-        
-        guestButton.setAttributedTitle(guestAttributedString, for: .normal)
-        guestButton.titleLabel?.font = UIFont.systemFont(ofSize: 14)
-        guestButton.contentHorizontalAlignment = .center
-        guestButton.translatesAutoresizingMaskIntoConstraints = false
         contentView.addSubview(guestButton)
     }
     
     private func setupLoadingIndicator() {
-        loadingIndicator.translatesAutoresizingMaskIntoConstraints = false
-        loadingIndicator.hidesWhenStopped = true
-        loadingIndicator.color = .white
         loginButton.addSubview(loadingIndicator)
         
         NSLayoutConstraint.activate([
@@ -197,7 +222,6 @@ final class LoginViewController: UIViewController {
     }
     
     private func setupKeyboardHandling() {
-        // Keyboard notifications
         NotificationCenter.default.addObserver(
             self,
             selector: #selector(keyboardWillShow(_:)),
@@ -212,7 +236,6 @@ final class LoginViewController: UIViewController {
             object: nil
         )
         
-        // Tap gesture to dismiss keyboard
         let tapGesture = UITapGestureRecognizer(target: self, action: #selector(dismissKeyboard))
         view.addGestureRecognizer(tapGesture)
     }
@@ -313,7 +336,6 @@ final class LoginViewController: UIViewController {
         loginButton.addTarget(self, action: #selector(loginTapped), for: .touchUpInside)
         guestButton.addTarget(self, action: #selector(guestTapped), for: .touchUpInside)
         
-        // Text field delegates for login button state
         emailTextField.addTarget(self, action: #selector(textFieldDidChange(_:)), for: .editingChanged)
         passwordTextField.addTarget(self, action: #selector(textFieldDidChange(_:)), for: .editingChanged)
     }
@@ -405,7 +427,6 @@ final class LoginViewController: UIViewController {
         let tabbar = MainTabbarController.createTabBar().tabBarController
         sceneDelegate.window?.rootViewController = tabbar
         
-        // Smooth transition
         UIView.transition(with: sceneDelegate.window!, duration: 0.5, options: .transitionCrossDissolve, animations: nil)
     }
     
@@ -431,7 +452,6 @@ extension LoginViewController: UITextFieldDelegate {
     }
     
     func textFieldDidBeginEditing(_ textField: UITextField) {
-        // Clear error highlights when user focuses on field
         let field: LoginViewModel.InputField = textField == emailTextField ? .username : .password
         highlightTextField(field, isError: false)
     }
@@ -446,7 +466,6 @@ extension LoginViewController: LoginViewModelProtocol {
     func loginDidSucceed(response: LoginResponse) {
         setLoadingState(false)
         
-        // Success feedback
         let generator = UINotificationFeedbackGenerator()
         generator.notificationOccurred(.success)
         
@@ -456,7 +475,6 @@ extension LoginViewController: LoginViewModelProtocol {
     func loginDidFail(error: Error) {
         setLoadingState(false)
         
-        // Error feedback
         let generator = UINotificationFeedbackGenerator()
         generator.notificationOccurred(.error)
         

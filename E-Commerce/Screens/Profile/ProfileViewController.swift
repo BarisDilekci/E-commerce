@@ -4,167 +4,209 @@
 //
 //  Created by Barış Dilekçi on 1.08.2025.
 //
-
 import UIKit
 
-class ProfileViewController: UIViewController {
+final class ProfileViewController: UIViewController {
     
     private let viewModel = ProfileViewModel()
     
-    private let scrollView = UIScrollView()
-    private let contentView = UIView()
-    
-    private let profileCardView: UIView = {
-        let view = UIView()
-        view.backgroundColor = .secondarySystemGroupedBackground
-        view.layer.cornerRadius = 16
-        view.layer.shadowColor = UIColor.black.cgColor
-        view.layer.shadowOpacity = 0.05
-        view.layer.shadowOffset = CGSize(width: 0, height: 4)
-        view.layer.shadowRadius = 8
-        return view
+    // MARK: - UI Components
+    private lazy var tableView: UITableView = {
+        let tableView = UITableView(frame: .zero, style: .insetGrouped)
+        tableView.delegate = self
+        tableView.dataSource = self
+        tableView.backgroundColor = .systemGroupedBackground
+        tableView.separatorStyle = .singleLine
+        tableView.showsVerticalScrollIndicator = false
+        tableView.translatesAutoresizingMaskIntoConstraints = false
+        
+        // Register cells
+        tableView.register(ProfileHeaderCell.self, forCellReuseIdentifier: ProfileHeaderCell.identifier)
+        tableView.register(MenuItemCell.self, forCellReuseIdentifier: MenuItemCell.identifier)
+        tableView.register(LogoutCell.self, forCellReuseIdentifier: LogoutCell.identifier)
+        
+        return tableView
     }()
     
-    private let avatarImageView: UIImageView = {
-        let imageView = UIImageView()
-        imageView.image = UIImage(systemName: "person.crop.circle.fill") // Placeholder
-        imageView.tintColor = .systemGray
-        imageView.contentMode = .scaleAspectFill
-        imageView.layer.cornerRadius = 40
-        imageView.clipsToBounds = true
-        return imageView
-    }()
+    // MARK: - Data Source
+    private enum Section: Int, CaseIterable {
+        case profile = 0
+        case menu = 1
+        case logout = 2
+        
+        var title: String? {
+            switch self {
+            case .profile: return nil
+            case .menu: return nil
+            case .logout: return nil
+            }
+        }
+    }
     
-    private let fullNameLabel = UILabel()
-    private let usernameLabel = UILabel()
-    private let emailLabel = UILabel()
+    private let menuItems: [(title: String, icon: String, action: MenuAction)] = [
+        ("Manage Profile", "person.circle", .manageProfile),
+        ("Campaigns", "gift", .campaigns),
+        ("Shipping Address", "location", .shippingAddress),
+        ("Privacy & Confidentiality", "lock.shield", .privacy),
+        ("About App", "info.circle", .aboutApp),
+        ("Help", "questionmark.circle", .help)
+    ]
     
-    private let logoutButton: UIButton = {
-        let button = UIButton(type: .system)
-        button.setTitle("Çıkış Yap", for: .normal)
-        button.setTitleColor(.white, for: .normal)
-        button.backgroundColor = .systemRed
-        button.layer.cornerRadius = 10
-        button.titleLabel?.font = UIFont.systemFont(ofSize: 17, weight: .semibold)
-        button.heightAnchor.constraint(equalToConstant: 50).isActive = true
-        button.addTarget(self, action: #selector(logoutTapped), for: .touchUpInside)
-        return button
-    }()
+    private enum MenuAction {
+        case manageProfile
+        case campaigns
+        case shippingAddress
+        case privacy
+        case aboutApp
+        case help
+        case logout
+    }
     
+    // MARK: - Lifecycle
     override func viewDidLoad() {
         super.viewDidLoad()
-        title = "Hesabım"
+        title = "Settings"
         view.backgroundColor = .systemGroupedBackground
-        configureUI()
-        bindViewModel()
+        setupUI()
     }
     
-    private func configureUI() {
-        // Setup Scroll View
-        view.addSubview(scrollView)
-        scrollView.translatesAutoresizingMaskIntoConstraints = false
-        scrollView.addSubview(contentView)
-        contentView.translatesAutoresizingMaskIntoConstraints = false
+    // MARK: - Setup
+    private func setupUI() {
+        view.addSubview(tableView)
         
         NSLayoutConstraint.activate([
-            scrollView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
-            scrollView.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor),
-            scrollView.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor),
-            scrollView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+            tableView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
+            tableView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            tableView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            tableView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
+        ])
+    }
+    
+    // MARK: - Actions
+    private func handleMenuAction(_ action: MenuAction) {
+        switch action {
+        case .manageProfile:
+            print("Navigate to Manage Profile")
+            // let vc = ManageProfileViewController()
+            // navigationController?.pushViewController(vc, animated: true)
             
-            contentView.topAnchor.constraint(equalTo: scrollView.topAnchor),
-            contentView.leadingAnchor.constraint(equalTo: scrollView.leadingAnchor),
-            contentView.trailingAnchor.constraint(equalTo: scrollView.trailingAnchor),
-            contentView.bottomAnchor.constraint(equalTo: scrollView.bottomAnchor),
-            contentView.widthAnchor.constraint(equalTo: scrollView.widthAnchor)
-        ])
-        
-        contentView.addSubview(profileCardView)
-        profileCardView.translatesAutoresizingMaskIntoConstraints = false
-        profileCardView.addSubview(avatarImageView)
-        profileCardView.addSubview(fullNameLabel)
-        profileCardView.addSubview(usernameLabel)
-        profileCardView.addSubview(emailLabel)
-        
-        contentView.addSubview(logoutButton)
-        
-        // Profile Card Layout
-        NSLayoutConstraint.activate([
-            profileCardView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 30),
-            profileCardView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
-            profileCardView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
-            profileCardView.bottomAnchor.constraint(equalTo: emailLabel.bottomAnchor, constant: 20)
-        ])
-        
-        avatarImageView.translatesAutoresizingMaskIntoConstraints = false
-        NSLayoutConstraint.activate([
-            avatarImageView.topAnchor.constraint(equalTo: profileCardView.topAnchor, constant: 20),
-            avatarImageView.centerXAnchor.constraint(equalTo: profileCardView.centerXAnchor),
-            avatarImageView.widthAnchor.constraint(equalToConstant: 80),
-            avatarImageView.heightAnchor.constraint(equalToConstant: 80)
-        ])
-        
-        fullNameLabel.translatesAutoresizingMaskIntoConstraints = false
-        fullNameLabel.font = UIFont.systemFont(ofSize: 20, weight: .semibold)
-        fullNameLabel.textAlignment = .center
-        
-        NSLayoutConstraint.activate([
-            fullNameLabel.topAnchor.constraint(equalTo: avatarImageView.bottomAnchor, constant: 12),
-            fullNameLabel.leadingAnchor.constraint(equalTo: profileCardView.leadingAnchor, constant: 16),
-            fullNameLabel.trailingAnchor.constraint(equalTo: profileCardView.trailingAnchor, constant: -16)
-        ])
-        
-        usernameLabel.translatesAutoresizingMaskIntoConstraints = false
-        usernameLabel.font = UIFont.systemFont(ofSize: 16, weight: .regular)
-        usernameLabel.textColor = .secondaryLabel
-        usernameLabel.textAlignment = .center
-        
-        NSLayoutConstraint.activate([
-            usernameLabel.topAnchor.constraint(equalTo: fullNameLabel.bottomAnchor, constant: 6),
-            usernameLabel.leadingAnchor.constraint(equalTo: fullNameLabel.leadingAnchor),
-            usernameLabel.trailingAnchor.constraint(equalTo: fullNameLabel.trailingAnchor)
-        ])
-        
-        emailLabel.translatesAutoresizingMaskIntoConstraints = false
-        emailLabel.font = UIFont.systemFont(ofSize: 16, weight: .regular)
-        emailLabel.textColor = .secondaryLabel
-        emailLabel.textAlignment = .center
-        
-        NSLayoutConstraint.activate([
-            emailLabel.topAnchor.constraint(equalTo: usernameLabel.bottomAnchor, constant: 4),
-            emailLabel.leadingAnchor.constraint(equalTo: fullNameLabel.leadingAnchor),
-            emailLabel.trailingAnchor.constraint(equalTo: fullNameLabel.trailingAnchor)
-        ])
-        
-        // Logout Button Layout
-        logoutButton.translatesAutoresizingMaskIntoConstraints = false
-        NSLayoutConstraint.activate([
-            logoutButton.topAnchor.constraint(equalTo: profileCardView.bottomAnchor, constant: 40),
-            logoutButton.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
-            logoutButton.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
-            logoutButton.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -40)
-        ])
+        case .campaigns:
+            print("Navigate to Campaigns")
+            
+        case .shippingAddress:
+            print("Navigate to Shipping Address")
+            
+        case .privacy:
+            print("Navigate to Privacy")
+            
+        case .aboutApp:
+            print("Navigate to About App")
+            
+        case .help:
+            print("Navigate to Help")
+            
+        case .logout:
+            showLogoutAlert()
+        }
     }
     
-    private func bindViewModel() {
-        fullNameLabel.text = viewModel.fullName
-        usernameLabel.text = "@\(viewModel.username)"
-        emailLabel.text = viewModel.email
-    }
-    
-    @objc private func logoutTapped() {
+    private func showLogoutAlert() {
         let alert = UIAlertController(title: "Çıkış Yap", message: "Oturumu kapatmak istediğinize emin misiniz?", preferredStyle: .alert)
-        alert.addAction(UIAlertAction(title: "Evet", style: .destructive, handler: { _ in
-            self.viewModel.logout()
-            self.redirectToLogin()
+        
+        alert.addAction(UIAlertAction(title: "Evet", style: .destructive, handler: { [weak self] _ in
+            self?.viewModel.logout()
+            self?.redirectToLogin()
         }))
-        alert.addAction(UIAlertAction(title: "İptal", style: .cancel))
-        present(alert, animated: true)
+        
+        alert.addAction(UIAlertAction(title: "İptal", style: .cancel, handler: nil))
+        present(alert, animated: true, completion: nil)
     }
     
     private func redirectToLogin() {
         let loginVC = LoginViewController()
         loginVC.modalPresentationStyle = .fullScreen
-        present(loginVC, animated: true)
+        present(loginVC, animated: true, completion: nil)
     }
 }
+
+// MARK: - UITableViewDataSource
+extension ProfileViewController: UITableViewDataSource {
+    func numberOfSections(in tableView: UITableView) -> Int {
+        return Section.allCases.count
+    }
+    
+    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+        guard let sectionType = Section(rawValue: section) else { return 0 }
+        
+        switch sectionType {
+        case .profile:
+            return 1
+        case .menu:
+            return menuItems.count
+        case .logout:
+            return 1
+        }
+    }
+    
+    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        guard let sectionType = Section(rawValue: indexPath.section) else {
+            return UITableViewCell()
+        }
+        
+        switch sectionType {
+        case .profile:
+            let cell = tableView.dequeueReusableCell(withIdentifier: ProfileHeaderCell.identifier, for: indexPath) as! ProfileHeaderCell
+            cell.configure(fullName: viewModel.fullName, email: viewModel.email)
+            return cell
+            
+        case .menu:
+            let cell = tableView.dequeueReusableCell(withIdentifier: MenuItemCell.identifier, for: indexPath) as! MenuItemCell
+            let menuItem = menuItems[indexPath.row]
+            cell.configure(title: menuItem.title, iconName: menuItem.icon)
+            return cell
+            
+        case .logout:
+            let cell = tableView.dequeueReusableCell(withIdentifier: LogoutCell.identifier, for: indexPath) as! LogoutCell
+            return cell
+        }
+    }
+    
+    func tableView(_ tableView: UITableView, titleForHeaderInSection section: Int) -> String? {
+        guard let sectionType = Section(rawValue: section) else { return nil }
+        return sectionType.title
+    }
+}
+
+// MARK: - UITableViewDelegate
+extension ProfileViewController: UITableViewDelegate {
+    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        tableView.deselectRow(at: indexPath, animated: true)
+        
+        guard let sectionType = Section(rawValue: indexPath.section) else { return }
+        
+        switch sectionType {
+        case .profile:
+            // Profile cell tapped - could navigate to edit profile
+            handleMenuAction(.manageProfile)
+            
+        case .menu:
+            let menuItem = menuItems[indexPath.row]
+            handleMenuAction(menuItem.action)
+            
+        case .logout:
+            handleMenuAction(.logout)
+        }
+    }
+    
+    func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
+        guard let sectionType = Section(rawValue: indexPath.section) else { return 44 }
+        
+        switch sectionType {
+        case .profile:
+            return 80
+        case .menu, .logout:
+            return 56
+        }
+    }
+}
+

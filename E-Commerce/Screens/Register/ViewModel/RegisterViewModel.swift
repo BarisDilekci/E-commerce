@@ -55,6 +55,7 @@ final class RegisterViewModel {
     init(authService: AuthServiceProtocol = AuthService.shared) {
         self.authService = authService
     }
+
     
     // MARK: - Public Methods
     func togglePasswordVisibility() {
