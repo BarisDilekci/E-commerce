@@ -8,7 +8,7 @@
 import UIKit
 enum CategoryViewBuilder {
     static func generate() -> UIViewController {
-        let viewModel = CategoryViewModel(networkService: NetworkService.shared)
+        let viewModel = CategoryViewModel(fetchCategoriesUseCase: DIContainer.shared.fetchCategoriesUseCase)
         let viewController = CategoryViewController(viewModel: viewModel)
         let navigationController = UINavigationController(rootViewController: viewController)
         return navigationController
@@ -34,7 +34,7 @@ final class CategoryViewController: UIViewController {
         tv.translatesAutoresizingMaskIntoConstraints = false
         tv.delegate = self
         tv.dataSource = self
-        tv.register(UITableViewCell.self, forCellReuseIdentifier: "categoryCell")
+        tv.register(UITableViewCell.self, forCellReuseIdentifier: UIConstants.Identifiers.categoryCell)
         return tv
     }()
     
@@ -42,7 +42,7 @@ final class CategoryViewController: UIViewController {
         super.viewDidLoad()
         
         view.backgroundColor = .systemBackground
-        title = "Kategoriler"
+        title = UIConstants.Texts.categoriesTitle
         
         setupLayout()
         viewModel.viewDidLoad()
@@ -50,7 +50,7 @@ final class CategoryViewController: UIViewController {
 
         viewModel.onCategoryFetched = { [weak self] categories in
             DispatchQueue.main.async {
-                self?.category = categories // Bu satırı ekleyin
+                self?.category = categories 
                 self?.tableView.reloadData()
             }
         }

@@ -1,3 +1,5 @@
+
+
 //
 //  ProductImageCell.swift
 //  E-Commerce
@@ -42,7 +44,7 @@ class ProductImageCell: UICollectionViewCell {
     private func setupUI() {
         contentView.addSubview(imageView)
         contentView.addSubview(activityIndicator)
-        contentView.backgroundColor = .systemBackground
+        contentView.backgroundColor = Theme.Colors.contentBackground
     }
     
     private func setupConstraints() {
@@ -77,20 +79,8 @@ class ProductImageCell: UICollectionViewCell {
             return
         }
         
-        // Simple image loading - in a real app, you'd want to use a proper image loading library like Kingfisher or SDWebImage
-        URLSession.shared.dataTask(with: url) { [weak self] data, response, error in
-            DispatchQueue.main.async {
-                self?.activityIndicator.stopAnimating()
-                
-                if let data = data, let image = UIImage(data: data) {
-                    self?.imageView.image = image
-                } else {
-                    // Show placeholder image on error
-                    self?.imageView.image = UIImage(systemName: "photo")
-                    self?.imageView.tintColor = .systemGray3
-                }
-            }
-        }.resume()
+        ImageLoader.shared.load(url.absoluteString, into: imageView, placeholder: UIImage(systemName: "photo"))
+        DispatchQueue.main.async { self.activityIndicator.stopAnimating() }
     }
     
     // MARK: - Reuse

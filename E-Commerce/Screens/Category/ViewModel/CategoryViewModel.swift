@@ -21,13 +21,13 @@ final class CategoryViewModel : CategoryViewModelProtocol {
     var onError: ((Error) -> Void)?
     var onCategoryFetched: (([Category]) -> Void)?
     
-    
+      
     var category : [Category] = []
     
-    private let networkService : NetworkServiceProtocol
+    private let fetchCategoriesUseCase: FetchCategoriesUseCase
     
-    init(networkService : NetworkServiceProtocol) {
-        self.networkService = networkService
+    init(fetchCategoriesUseCase: FetchCategoriesUseCase) {
+        self.fetchCategoriesUseCase = fetchCategoriesUseCase
     }
     func categoryAt(index: Int) -> Category {
         return category[index] 
@@ -38,7 +38,7 @@ final class CategoryViewModel : CategoryViewModelProtocol {
                 let category = try await fetch()
                 
                 await MainActor.run {
-                    self.category = category
+                    self.category = category 
                     self.onCategoryFetched?(category)
                 }
             } catch {
@@ -51,8 +51,7 @@ final class CategoryViewModel : CategoryViewModelProtocol {
     }
     
     private func fetch() async throws -> [Category] {
-        let category: [Category] = try await networkService.fetch(endpoint: APIEndpoint.category)
-        return category
+        try await fetchCategoriesUseCase.execute()
     }
     
     func viewDidLoad() {

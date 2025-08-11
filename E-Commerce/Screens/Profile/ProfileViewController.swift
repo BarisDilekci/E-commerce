@@ -15,7 +15,7 @@ final class ProfileViewController: UIViewController {
         let tableView = UITableView(frame: .zero, style: .insetGrouped)
         tableView.delegate = self
         tableView.dataSource = self
-        tableView.backgroundColor = .systemGroupedBackground
+        tableView.backgroundColor = UIConstants.Colors.background
         tableView.separatorStyle = .singleLine
         tableView.showsVerticalScrollIndicator = false
         tableView.translatesAutoresizingMaskIntoConstraints = false
@@ -37,19 +37,19 @@ final class ProfileViewController: UIViewController {
         var title: String? {
             switch self {
             case .profile: return nil
-            case .menu: return nil
+        case .menu: return nil
             case .logout: return nil
             }
         }
     }
     
     private let menuItems: [(title: String, icon: String, action: MenuAction)] = [
-        ("Manage Profile", "person.circle", .manageProfile),
-        ("Campaigns", "gift", .campaigns),
-        ("Shipping Address", "location", .shippingAddress),
-        ("Privacy & Confidentiality", "lock.shield", .privacy),
-        ("About App", "info.circle", .aboutApp),
-        ("Help", "questionmark.circle", .help)
+        (UIConstants.Texts.menuManageProfile, "person.circle", .manageProfile),
+        (UIConstants.Texts.menuCampaigns, "gift", .campaigns),
+        (UIConstants.Texts.menuShippingAddress, "location", .shippingAddress),
+        (UIConstants.Texts.menuPrivacy, "lock.shield", .privacy),
+        (UIConstants.Texts.menuAboutApp, "info.circle", .aboutApp),
+        (UIConstants.Texts.menuHelp, "questionmark.circle", .help)
     ]
     
     private enum MenuAction {
@@ -65,8 +65,8 @@ final class ProfileViewController: UIViewController {
     // MARK: - Lifecycle
     override func viewDidLoad() {
         super.viewDidLoad()
-        title = "Settings"
-        view.backgroundColor = .systemGroupedBackground
+        title = UIConstants.Texts.settingsTitle
+        view.backgroundColor = UIConstants.Colors.background
         setupUI()
     }
     
@@ -111,7 +111,7 @@ final class ProfileViewController: UIViewController {
     }
     
     private func showLogoutAlert() {
-        let alert = UIAlertController(title: "Çıkış Yap", message: "Oturumu kapatmak istediğinize emin misiniz?", preferredStyle: .alert)
+        let alert = UIAlertController(title: UIConstants.Texts.logoutTitle, message: UIConstants.Texts.logoutMessage, preferredStyle: .alert)
         
         alert.addAction(UIAlertAction(title: "Evet", style: .destructive, handler: { [weak self] _ in
             self?.viewModel.logout()

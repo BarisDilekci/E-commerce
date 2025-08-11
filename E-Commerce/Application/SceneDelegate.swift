@@ -20,8 +20,7 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 
         window = UIWindow(windowScene: windowScene)
 
-        // Login kontrolü yapabilirsiniz
-        if UserDefaults.standard.bool(forKey: "isLoggedIn") {
+        if AuthService.shared.isLoggedIn {
             let tabbar = MainTabbarController.createTabBar().tabBarController
             window?.rootViewController = tabbar
         } else {

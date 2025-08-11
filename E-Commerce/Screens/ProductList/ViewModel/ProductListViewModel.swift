@@ -22,7 +22,7 @@ final class ProductListViewModel: ProductListModelProtocol {
     
     // MARK: - Properties
     private let categoryId: Int
-    private let networkService: NetworkServiceProtocol
+    private let fetchByCategoryUseCase: FetchProductsByCategoryUseCase
     private var products: [Product] = []
     private var cachedProducts: [Product] = []
     private var lastFetchTime: Date?
@@ -35,7 +35,7 @@ final class ProductListViewModel: ProductListModelProtocol {
     
     let refreshControl: UIRefreshControl = {
         let refresh = UIRefreshControl()
-        refresh.tintColor = .systemBlue
+        refresh.tintColor = UIConstants.Colors.tint
         return refresh
     }()
     
@@ -47,10 +47,10 @@ final class ProductListViewModel: ProductListModelProtocol {
     }()
     
     // MARK: - Init
-    init(categoryId: Int, categoryName: String, networkService: NetworkServiceProtocol) {
+    init(categoryId: Int, categoryName: String, fetchByCategoryUseCase: FetchProductsByCategoryUseCase) {
           self.categoryId = categoryId
           self.categoryName = categoryName
-          self.networkService = networkService
+          self.fetchByCategoryUseCase = fetchByCategoryUseCase
       }
     // MARK: - Lifecycle
     func viewDidLoad() {
@@ -68,7 +68,7 @@ final class ProductListViewModel: ProductListModelProtocol {
     private func fetchProducts() {
         Task {
             do {
-                let fetched: [Product] = try await networkService.fetch(endpoint: .productsByCategory(id: categoryId))
+                let fetched: [Product] = try await fetchByCategoryUseCase.execute(categoryId: categoryId)
                 await MainActor.run {
                     self.products = fetched
                     self.cachedProducts = fetched

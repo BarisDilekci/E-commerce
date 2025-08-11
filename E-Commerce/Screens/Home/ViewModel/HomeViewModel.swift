@@ -4,137 +4,124 @@
 //
 //  Created by Barış Dilekçi on 15.07.2025.
 //
-import Foundation
+
 import UIKit
 
-protocol HomeViewModelProtocol {
-    func viewDidLoad()
-    var onProductsFetched: (([Product]) -> Void)? { get set }
-    func cellForItemAt(at indexPath: IndexPath, collectionView: UICollectionView) -> UICollectionViewCell
+protocol HomeViewModelProtocol: AnyObject {
+    var products: [Product] { get }
+    var filteredProducts: [Product] { get }
+    var isSearching: Bool { get set }
+    var onProductsFetched: (() -> Void)? { get set }
     var onError: ((Error) -> Void)? { get set }
-    func numberOfItemsInSection() -> Int
-    func didSelectRow(at indexPath: IndexPath)
+    var onLoadingStateChanged: ((Bool) -> Void)? { get set }
+    var refreshControl: UIRefreshControl { get }
+    var onProductSelected: ((Product) -> Void)? { get set }
+
     
-    
+    func viewDidLoad()
+    func searchProducts(query: String)
+    func numberOfItems() -> Int
+    func product(at index: Int) -> Product
+    func didSelectProduct(at index: Int)
 }
 
 final class HomeViewModel: HomeViewModelProtocol {
-
-    var onProductSelected: ((Product) -> Void)?
-
-    private let networkService: NetworkServiceProtocol
     
-    var onProductsFetched: (([Product]) -> Void)?
+    private let fetchProductsUseCase: FetchProductsUseCase
+    
+    var products: [Product] = []
+    var filteredProducts: [Product] = []
+    var isSearching: Bool = false
+    
+    var onProductsFetched: (() -> Void)?
     var onError: ((Error) -> Void)?
-    var product : [Product] = []
+    var onLoadingStateChanged: ((Bool) -> Void)?
     
     private var cachedProducts: [Product] = []
     private var lastFetchTime: Date?
     private let cacheValidityDuration: TimeInterval = 300
     
-    init(networkService: NetworkServiceProtocol) {
-        self.networkService = networkService
+    var refreshControl: UIRefreshControl = {
+        let refresh = UIRefreshControl()
+        refresh.tintColor = UIConstants.Colors.tint
+        return refresh
+    }()
+    
+    var onProductSelected: ((Product) -> Void)?
+
+    
+    init(fetchProductsUseCase: FetchProductsUseCase) {
+        self.fetchProductsUseCase = fetchProductsUseCase
     }
     
     func viewDidLoad() {
         if let lastFetch = lastFetchTime,
            Date().timeIntervalSince(lastFetch) < cacheValidityDuration,
            !cachedProducts.isEmpty {
-            onProductsFetched?(cachedProducts)
+            self.products = cachedProducts
+            onProductsFetched?()
             return
         }
-        
         fetchProducts()
     }
     
-    func searchProducts(query: String, completion: @escaping ([Product]) -> Void) {
-         let filtered = product.filter { $0.name.lowercased().contains(query.lowercased()) }
-         completion(filtered)
-     }
+    func searchProducts(query: String) {
+        if query.isEmpty {
+            isSearching = false
+            onProductsFetched?()
+            return
+        }
+        isSearching = true
+        filteredProducts = products.filter { $0.name.lowercased().contains(query.lowercased()) }
+        onProductsFetched?()
+    }
+    
+    func numberOfItems() -> Int {
+        return isSearching ? filteredProducts.count : products.count
+    }
+    
+    func product(at index: Int) -> Product {
+        return isSearching ? filteredProducts[index] : products[index]
+    }
+    
+    func didSelectProduct(at index: Int) {
+        guard index >= 0 else { return }
+        let selectedProduct: Product
+        if isSearching {
+            guard index < filteredProducts.count else { return }
+            selectedProduct = filteredProducts[index]
+        } else {
+            guard index < products.count else { return }
+            selectedProduct = products[index]
+        }
+        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+        onProductSelected?(selectedProduct)
+    }
+
+
+
     
     private func fetchProducts() {
+        onLoadingStateChanged?(true)
         Task {
             do {
-                let products = try await fetch()
+                let fetchedProducts: [Product] = try await fetchProductsUseCase.execute()
+                let filtered = fetchedProducts.filter { !$0.name.isEmpty && $0.price > 0 }
+                    .sorted { $0.name < $1.name }
                 
-                await MainActor.run {
-                    self.product = products
-                    self.cachedProducts = products
+                DispatchQueue.main.async {
+                    self.products = filtered
+                    self.cachedProducts = filtered
                     self.lastFetchTime = Date()
-                    self.onProductsFetched?(products)
+                    self.onLoadingStateChanged?(false)
+                    self.onProductsFetched?()
                 }
             } catch {
-                await MainActor.run {
+                DispatchQueue.main.async {
+                    self.onLoadingStateChanged?(false)
                     self.onError?(error)
                 }
-                print("Ürünler alınırken hata oluştu: \(error)")
             }
         }
     }
-
-    
-    private func fetch() async throws -> [Product] {
-        let products: [Product] = try await networkService.fetch(endpoint: APIEndpoint.products)
-        
-        // Ürünleri filtrele ve sırala (opsiyonel)
-        let filteredProducts = products
-            .filter { !$0.name.isEmpty && $0.price > 0 }
-            .sorted { $0.name < $1.name }
-        
-        return filteredProducts
-    }
-    
-    func clearCache() {
-        cachedProducts.removeAll()
-        lastFetchTime = nil
-    }
-    
-    func refresh() {
-        clearCache()
-        fetchProducts()
-    }
-    
-    func numberOfItemsInSection() -> Int {
-        return product.count
-    }
-    
-    func cellForItemAt(at indexPath: IndexPath, collectionView: UICollectionView) -> UICollectionViewCell {
-        guard let cell = collectionView.dequeueReusableCell(
-            withReuseIdentifier: ProductCell.identifier,
-            for: indexPath
-        ) as? ProductCell else {
-            return UICollectionViewCell()
-        }
-        
-        cell.configure(with: product[indexPath.item])
-        return cell
-    }
-    
-    
-    
-    func didSelectRow(at indexPath: IndexPath) {
-        let selectedProduct = product[indexPath.item]
-        
-        let impactGenerator = UIImpactFeedbackGenerator(style: .light)
-        impactGenerator.impactOccurred()
-        
-        onProductSelected?(selectedProduct)
-   
-    }
-
-    
-     let refreshControl: UIRefreshControl = {
-        let refresh = UIRefreshControl()
-        refresh.tintColor = .systemBlue
-        return refresh
-    }()
-    
-     let loadingView: UIActivityIndicatorView = {
-        let indicator = UIActivityIndicatorView(style: .large)
-        indicator.translatesAutoresizingMaskIntoConstraints = false
-        indicator.hidesWhenStopped = true
-        return indicator
-    }()
-    
 }
-

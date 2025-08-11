@@ -25,7 +25,7 @@ final class LoginViewController: UIViewController {
     
     private lazy var titleLabel: UILabel = {
         let label = UILabel()
-        label.text = "Login to your account"
+        label.text = UIConstants.Texts.loginTitle
         label.font = UIFont.systemFont(ofSize: 32, weight: .bold)
         label.textColor = .label
         label.numberOfLines = 0
@@ -35,7 +35,7 @@ final class LoginViewController: UIViewController {
     
     private lazy var subtitleLabel: UILabel = {
         let label = UILabel()
-        label.text = "It's great to see you again."
+        label.text = UIConstants.Texts.loginSubtitle
         label.font = UIFont.systemFont(ofSize: 16, weight: .regular)
         label.textColor = .secondaryLabel
         label.numberOfLines = 0
@@ -45,7 +45,7 @@ final class LoginViewController: UIViewController {
     
     private lazy var emailLabel: UILabel = {
         let label = UILabel()
-        label.text = "Username"
+        label.text = UIConstants.Texts.usernameLabel
         label.font = UIFont.systemFont(ofSize: 16, weight: .medium)
         label.textColor = .label
         label.translatesAutoresizingMaskIntoConstraints = false
@@ -64,7 +64,7 @@ final class LoginViewController: UIViewController {
 
     private lazy var emailTextField: UITextField = {
         let textField = UITextField()
-        textField.placeholder = "Enter your username"
+        textField.placeholder = UIConstants.Texts.usernamePlaceholder
         textField.font = UIFont.systemFont(ofSize: 16)
         textField.textColor = .label
         textField.autocapitalizationType = .none
@@ -78,7 +78,7 @@ final class LoginViewController: UIViewController {
 
     private lazy var passwordLabel: UILabel = {
         let label = UILabel()
-        label.text = "Password"
+        label.text = UIConstants.Texts.passwordLabel
         label.font = UIFont.systemFont(ofSize: 16, weight: .medium)
         label.textColor = .label
         label.translatesAutoresizingMaskIntoConstraints = false
@@ -97,7 +97,7 @@ final class LoginViewController: UIViewController {
 
     private lazy var passwordTextField: UITextField = {
         let textField = UITextField()
-        textField.placeholder = "Enter your password"
+        textField.placeholder = UIConstants.Texts.passwordPlaceholder
         textField.font = UIFont.systemFont(ofSize: 16)
         textField.textColor = .label
         textField.isSecureTextEntry = true
@@ -117,8 +117,8 @@ final class LoginViewController: UIViewController {
     
     private lazy var createAccountButton: UIButton = {
         let button = UIButton(type: .system)
-        let base = "Don't have an account? "
-        let action = "Create account"
+        let base = UIConstants.Texts.createAccountCTA
+        let action = UIConstants.Texts.createAccountAction
         let attr = NSMutableAttributedString(string: base + action)
         attr.addAttribute(.foregroundColor, value: UIColor.secondaryLabel, range: NSRange(location: 0, length: base.count))
         attr.addAttribute(.foregroundColor, value: UIColor.systemBlue, range: NSRange(location: base.count, length: action.count))
@@ -132,7 +132,7 @@ final class LoginViewController: UIViewController {
 
     private lazy var loginButton: UIButton = {
         let button = UIButton(type: .system)
-        button.setTitle("Login", for: .normal)
+        button.setTitle(UIConstants.Texts.login, for: .normal)
         button.backgroundColor = .systemGray4
         button.setTitleColor(.white, for: .normal)
         button.titleLabel?.font = UIFont.systemFont(ofSize: 16, weight: .medium)
@@ -349,7 +349,7 @@ final class LoginViewController: UIViewController {
             view.isUserInteractionEnabled = false
         } else {
             loadingIndicator.stopAnimating()
-            loginButton.setTitle("Login", for: .normal)
+            loginButton.setTitle(UIConstants.Texts.login, for: .normal)
             view.isUserInteractionEnabled = true
         }
     }
@@ -479,7 +479,7 @@ extension LoginViewController: LoginViewModelProtocol {
         generator.notificationOccurred(.error)
         
         let errorMessage = viewModel.getErrorMessage(from: error)
-        showAlert(title: "Login Failed", message: errorMessage)
+        showAlert(title: UIConstants.Texts.loginFailedTitle, message: errorMessage)
     }
     
     func shouldNavigateToMainApp() {

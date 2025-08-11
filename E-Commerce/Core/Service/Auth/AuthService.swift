@@ -206,8 +206,44 @@ final class AuthService: AuthServiceProtocol {
     }
 
     func refreshToken(completion: @escaping (Result<String, Error>) -> Void) {
-        logger.log("Token refresh requested - not implemented", level: .debug)
-        completion(.failure(NSError(domain: "Not implemented", code: 0)))
+        guard let url = APIEndpoint.refreshToken.url else {
+            completion(.failure(NSError(domain: "Invalid URL", code: 0)))
+            return
+        }
+
+        var request = URLRequest(url: url)
+        request.httpMethod = APIEndpoint.refreshToken.method.rawValue
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+
+        urlSession.dataTask(with: request) { [weak self] data, response, error in
+            DispatchQueue.main.async {
+                guard let self = self else { return }
+
+                if let error = error {
+                    self.logger.log("Refresh error: \(error)", level: .error)
+                    completion(.failure(error))
+                    return
+                }
+
+                guard let httpResponse = response as? HTTPURLResponse, let data = data else {
+                    completion(.failure(NSError(domain: "Invalid response", code: 0)))
+                    return
+                }
+
+                guard httpResponse.statusCode == 200 else {
+                    completion(.failure(NSError(domain: "HTTP Error", code: httpResponse.statusCode)))
+                    return
+                }
+
+                do {
+                    let refresh = try JSONDecoder().decode(RefreshResponse.self, from: data)
+                    self.storage.saveToken(refresh.token)
+                    completion(.success(refresh.token))
+                } catch {
+                    completion(.failure(error))
+                }
+            }
+        }.resume()
     }
 
     func getAuthHeaders() -> [String: String] {

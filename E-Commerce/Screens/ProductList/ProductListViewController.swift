@@ -13,7 +13,7 @@ enum ProductViewBuilder {
         let viewModel = ProductListViewModel(
             categoryId: categoryId,
             categoryName: categoryName,
-            networkService: NetworkService.shared
+            fetchByCategoryUseCase: DIContainer.shared.fetchProductsByCategoryUseCase
         )
         let viewController = ProductListViewController(viewModel: viewModel)
         viewController.title = categoryName 
@@ -34,7 +34,7 @@ final class ProductListViewController: UIViewController {
         layout.sectionInset = UIEdgeInsets(top: 16, left: 16, bottom: 16, right: 16)
         let cv = UICollectionView(frame: .zero, collectionViewLayout: layout)
         cv.translatesAutoresizingMaskIntoConstraints = false
-        cv.backgroundColor = .systemGroupedBackground
+        cv.backgroundColor = UIConstants.Colors.background
         cv.showsVerticalScrollIndicator = false
         cv.alwaysBounceVertical = true
         return cv
@@ -42,7 +42,7 @@ final class ProductListViewController: UIViewController {
     
     private lazy var emptyStateView: UILabel = {
         let label = UILabel()
-        label.text = "Hiç ürün bulunamadı."
+        label.text = UIConstants.Texts.emptyStateMessage
         label.textAlignment = .center
         label.textColor = .secondaryLabel
         label.translatesAutoresizingMaskIntoConstraints = false
@@ -68,10 +68,10 @@ final class ProductListViewController: UIViewController {
     }
     
     private func setupUI() {
-        view.backgroundColor = .systemGroupedBackground
+        view.backgroundColor = UIConstants.Colors.background
         title = viewModel.categoryName 
         navigationController?.navigationBar.prefersLargeTitles = true
-        navigationController?.navigationBar.tintColor = .systemBlue
+        navigationController?.navigationBar.tintColor = UIConstants.Colors.tint
         
         view.addSubview(collectionView)
         view.addSubview(viewModel.loadingView)
@@ -152,16 +152,9 @@ final class ProductListViewController: UIViewController {
     }
     
     private func showError(_ error: Error) {
-        let alert = UIAlertController(
-            title: "Hata",
-            message: "Ürünler yüklenirken bir hata oluştu. Lütfen tekrar deneyin.",
-            preferredStyle: .alert
-        )
-        alert.addAction(UIAlertAction(title: "Tekrar Dene", style: .default) { [weak self] _ in
+        AlertHelper.showErrorAlert(on: self, title: UIConstants.Texts.errorTitle, message: UIConstants.Texts.errorMessage) { [weak self] in
             self?.refreshData()
-        })
-        alert.addAction(UIAlertAction(title: "Tamam", style: .cancel))
-        present(alert, animated: true)
+        }
     }
     
     @objc private func refreshData() {

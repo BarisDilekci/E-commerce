@@ -53,7 +53,7 @@ class ProductDetailViewController: UIViewController {
         pageControl.numberOfPages = viewModel.product.imageUrls.count
         pageControl.currentPage = 0
         pageControl.pageIndicatorTintColor = UIColor.label.withAlphaComponent(0.2)
-        pageControl.currentPageIndicatorTintColor = .label
+        pageControl.currentPageIndicatorTintColor = UIConstants.Colors.tint
         pageControl.preferredIndicatorImage = UIImage(systemName: "circle.fill")?.withConfiguration(UIImage.SymbolConfiguration(pointSize: 6))
         pageControl.addTarget(self, action: #selector(pageControlValueChanged), for: .valueChanged)
         return pageControl
@@ -174,7 +174,7 @@ class ProductDetailViewController: UIViewController {
     private lazy var storeSubtitleLabel: UILabel = {
         let label = UILabel()
         label.translatesAutoresizingMaskIntoConstraints = false
-        label.text = "Satıcı"
+        label.text = UIConstants.Texts.sellerSubtitle
         label.font = UIFont.systemFont(ofSize: 14, weight: .regular)
         label.textColor = .secondaryLabel
         return label
@@ -204,7 +204,7 @@ class ProductDetailViewController: UIViewController {
     private lazy var addToCartButton: UIButton = {
         let button = UIButton(type: .system)
         button.translatesAutoresizingMaskIntoConstraints = false
-        button.setTitle("Sepete Ekle", for: .normal)
+        button.setTitle(UIConstants.Texts.addToCart, for: .normal)
         button.titleLabel?.font = UIFont.systemFont(ofSize: 16, weight: .semibold)
         button.setTitleColor(.label, for: .normal)
         button.backgroundColor = .quaternarySystemFill
@@ -223,7 +223,7 @@ class ProductDetailViewController: UIViewController {
     private lazy var buyNowButton: UIButton = {
         let button = UIButton(type: .system)
         button.translatesAutoresizingMaskIntoConstraints = false
-        button.setTitle("Hemen Satın Al", for: .normal)
+        button.setTitle(UIConstants.Texts.buyNow, for: .normal)
         button.titleLabel?.font = UIFont.systemFont(ofSize: 16, weight: .semibold)
         button.setTitleColor(.white, for: .normal)
         button.backgroundColor = .label
@@ -516,8 +516,8 @@ class ProductDetailViewController: UIViewController {
     
     private func showLoginAlert() {
         let alert = UIAlertController(
-            title: "Giriş Yapın",
-            message: "Bu işlem için önce giriş yapmanız gerekmektedir.",
+            title: UIConstants.Texts.loginRequiredTitle,
+            message: UIConstants.Texts.loginRequiredMessage,
             preferredStyle: .alert
         )
         
@@ -573,7 +573,7 @@ class ProductDetailViewController: UIViewController {
         
         viewModel.performActionIfLoggedIn(
             action: {
-                self.addToCartButton.setTitle("Sepete Eklendi ✓", for: .normal)
+                self.addToCartButton.setTitle(UIConstants.Texts.addedToCart, for: .normal)
                 self.addToCartButton.backgroundColor = UIColor.systemGreen.withAlphaComponent(0.1)
                 self.addToCartButton.layer.borderColor = UIColor.systemGreen.cgColor
                 self.addToCartButton.setTitleColor(.systemGreen, for: .normal)
@@ -583,7 +583,7 @@ class ProductDetailViewController: UIViewController {
                 impact.impactOccurred()
 
                 DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
-                    self.addToCartButton.setTitle("Sepete Ekle", for: .normal)
+                    self.addToCartButton.setTitle(UIConstants.Texts.addToCart, for: .normal)
                     self.addToCartButton.backgroundColor = .quaternarySystemFill
                     self.addToCartButton.layer.borderColor = UIColor.separator.cgColor
                     self.addToCartButton.setTitleColor(.label, for: .normal)

@@ -23,7 +23,7 @@ enum APIEndpoint {
     case refreshToken
 
     var baseURL: String {
-        return "http://localhost:8080/api/v1"
+        AppConfig.current.apiBaseURLString
     }
 
     var path: String {

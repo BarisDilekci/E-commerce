@@ -14,7 +14,7 @@ class ProductDetailViewModel {
     var selectedImageIndex: Int = 0
 
     var isLoggedIn: Bool {
-        UserDefaults.standard.bool(forKey: "isLoggedIn")
+        AuthService.shared.isLoggedIn
     }
 
     var discountedPrice: Double {

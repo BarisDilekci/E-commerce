@@ -31,13 +31,17 @@ class MainTabbarController: MainTabbarProtocol {
     }
     
     private func setupTabBar() {
-        let homeVC = HomeViewBuilder.generate()
+        let homeVC = DIContainer.shared.makeHome()
         homeVC.tabBarItem = UITabBarItem(title: "Ana Sayfa", image: UIImage(systemName: "house"), tag: 0)
+        
+        let favoritesVC = FavoritesViewController(favoritesService: FavoritesService())
+        favoritesVC.tabBarItem = UITabBarItem(title: "Favoriler", image: UIImage(systemName: "heart"), tag: 1)
+        
         
         let categoryVC = CategoryViewBuilder.generate()
         categoryVC.tabBarItem = UITabBarItem(title: "Kategoriler", image: UIImage(systemName: "square.grid.2x2"), tag: 1)
         
-        var viewControllers: [UIViewController] = [homeVC, categoryVC]
+        var viewControllers: [UIViewController] = [homeVC, categoryVC ,favoritesVC]
         
         if isLoggedIn {
             let profileVC = ProfileViewController()
